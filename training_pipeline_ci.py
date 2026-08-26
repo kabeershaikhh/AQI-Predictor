@@ -142,19 +142,6 @@ def pm25_to_epa_aqi(pm25_value):
     return aqi
 
 
-def get_current_model_metrics(project):
-    """
-    Try to fetch the current model's metrics from Hopsworks Model Registry.
-    Returns (rmse, r2) or (None, None) if no model exists.
-    """
-    try:
-        mr = project.get_model_registry()
-        model = mr.get_model("aqi_prediction_model", version=1)
-        metrics = model.training_metrics
-        return metrics.get("pm25_rmse"), metrics.get("pm25_r2")
-    except Exception:
-        return None, None
-
 
 def main():
     print("=" * 60)
@@ -280,32 +267,23 @@ def main():
     joblib.dump(scaler, os.path.join(model_dir, "scaler.pkl"))
     print(f"  ✓ Model saved locally in '{model_dir}/'")
 
-    # Check if new model is better than current one in Hopsworks
-    current_rmse, current_r2 = get_current_model_metrics(project)
-
-    should_upload = False
-    if current_rmse is None:
-        print("  No existing model in registry. Will upload.")
-        should_upload = True
-    elif rmse < current_rmse:
-        print(f"  ✓ New model is BETTER (RMSE: {rmse:.2f} < {current_rmse:.2f}). Will upload.")
-        should_upload = True
-    else:
-        print(f"  ✗ New model is NOT better (RMSE: {rmse:.2f} >= {current_rmse:.2f}). Skipping upload.")
-
-    if should_upload:
-        try:
-            mr = project.get_model_registry()
-            aqi_model = mr.python.create_model(
-                name="aqi_prediction_model",
-                metrics={"pm25_rmse": rmse, "pm25_r2": r2, "pm25_mae": mae},
-                description=f"RandomForest predicting PM2.5 24h ahead. RMSE={rmse:.2f}, R²={r2:.4f}"
-            )
-            aqi_model.save(model_dir)
-            print("  ✓ Model registered in Hopsworks Model Registry!")
-        except Exception as e:
-            print(f"  ✗ Hopsworks upload failed: {e}")
-            print("  ! Model is saved locally. Will retry on next run.")
+    # Always upload the latest model to Hopsworks.
+    # Why? We retrain daily on NEW data (more hours of pollution readings).
+    # The latest model reflects current pollution patterns — that's the whole
+    # point of daily retraining. Comparison only matters when switching model
+    # architectures (RF vs XGBoost), not when retraining the same one on more data.
+    try:
+        mr = project.get_model_registry()
+        aqi_model = mr.python.create_model(
+            name="aqi_prediction_model",
+            metrics={"pm25_rmse": rmse, "pm25_r2": r2, "pm25_mae": mae},
+            description=f"RandomForest predicting PM2.5 24h ahead. RMSE={rmse:.2f}, R²={r2:.4f}. Trained on {len(X)} samples."
+        )
+        aqi_model.save(model_dir)
+        print("  ✓ Model registered in Hopsworks Model Registry!")
+    except Exception as e:
+        print(f"  ✗ Hopsworks upload failed: {e}")
+        print("  ! Model is saved locally. Will retry on next run.")
 
     # ── Summary ──
     print("\n" + "=" * 60)
@@ -313,7 +291,7 @@ def main():
     print(f"  Model:      RandomForest ({RF_PARAMS['n_estimators']} trees)")
     print(f"  PM2.5 RMSE: {rmse:.2f} µg/m³")
     print(f"  PM2.5 R²:   {r2:.4f}")
-    print(f"  Uploaded:   {'Yes' if should_upload else 'No (not better than current)'}")
+    print(f"  Trained on: {len(X)} samples")
     print("=" * 60)
 
 
