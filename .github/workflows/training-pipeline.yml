@@ -1,0 +1,47 @@
+name: Training Pipeline (Daily)
+
+on:
+  schedule:
+    # Run every day at 2:00 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Training Pipeline (RandomForest only)
+        env:
+          HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
+        run: python training_pipeline_ci.py
+
+      - name: Upload model artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: model-artifacts-${{ github.run_number }}
+          path: aqi_model_dir/
+          retention-days: 30
+
+      - name: Upload SHAP plot
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shap-plot-${{ github.run_number }}
+          path: images/shap_summary.png
+          retention-days: 30

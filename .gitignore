@@ -1,0 +1,22 @@
+# Virtual environments
+venv/
+wsl_venv2/
+
+# Python
+__pycache__/
+*.pyc
+
+# Secrets
+.env
+
+# Large model files (stored in Hopsworks, not git)
+aqi_model_dir/
+models_archive/
+
+# Local data (stored in Hopsworks Feature Store)
+feature_store/
+
+# IDE / Jupyter
+.ipynb_checkpoints/
+.vscode/
+.idea/
