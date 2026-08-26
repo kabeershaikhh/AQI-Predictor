@@ -121,7 +121,7 @@ def upload_to_hopsworks(df):
         primary_key=["city", "timestamp"],
         event_time="timestamp",
         description="Air Quality Index data with pollution components and time features for 5 cities in Sindh, Pakistan",
-        online_enabled=True
+        online_enabled=False
     )
 
     # Upload in batches to avoid timeouts
@@ -131,11 +131,7 @@ def upload_to_hopsworks(df):
 
     for i in range(0, total, batch_size):
         batch = df.iloc[i:i+batch_size]
-        aqi_fg.insert(
-            batch,
-            storage="online",
-            write_options={"start_offline_materialization": True, "wait_for_job": False}
-        )
+        aqi_fg.insert(batch, write_options={"wait_for_job": False})
         print(f"    ✓ Uploaded rows {i} - {min(i+batch_size, total)} of {total}")
 
     print("  ✓ All data uploaded to Hopsworks Feature Store!")

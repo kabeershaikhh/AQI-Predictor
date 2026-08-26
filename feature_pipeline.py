@@ -138,18 +138,11 @@ def upload_to_hopsworks(df):
         primary_key=["city", "timestamp"],
         event_time="timestamp",
         description="Air Quality Index data with pollution components and time features for 5 cities in Sindh, Pakistan",
-        online_enabled=True
+        online_enabled=False
     )
     
     print("  Inserting data into Feature Store...")
-    # Use storage="online" to write via REST/Kafka (bypasses HDFS entirely)
-    # start_offline_materialization triggers a job ON the Hopsworks cluster
-    # to sync online data to offline store (so we can use it for training later)
-    aqi_fg.insert(
-        df,
-        storage="online",
-        write_options={"start_offline_materialization": True, "wait_for_job": False}
-    )
+    aqi_fg.insert(df, write_options={"wait_for_job": False})
     print("  ✓ Data uploaded to Hopsworks Feature Store!")
 
 
