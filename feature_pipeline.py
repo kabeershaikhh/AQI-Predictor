@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import requests
 import pandas as pd
 from datetime import datetime
@@ -126,6 +127,7 @@ def upload_to_hopsworks(df):
     """
     Connects to Hopsworks and uploads the DataFrame to the Feature Store.
     Uses storage='online' to avoid direct HDFS writes from external clients.
+    Includes retry handling for Kafka topic readiness.
     """
     print("  Connecting to Hopsworks...")
     project = hopsworks.login(api_key_value=HOPSWORKS_API_KEY)
@@ -137,6 +139,7 @@ def upload_to_hopsworks(df):
         if not aqi_fg.online_enabled:
             print("  ⚠️ Existing feature group has online_enabled=False. Recreating with online_enabled=True...")
             aqi_fg.delete()
+            time.sleep(5)
             aqi_fg = fs.create_feature_group(
                 name="aqi_features",
                 version=1,
@@ -145,6 +148,8 @@ def upload_to_hopsworks(df):
                 description="Air Quality Index data with pollution components and time features for 5 cities in Sindh, Pakistan",
                 online_enabled=True
             )
+            print("  Waiting 15s for Kafka topic & ACL propagation...")
+            time.sleep(15)
     except Exception:
         aqi_fg = fs.get_or_create_feature_group(
             name="aqi_features",
@@ -156,13 +161,23 @@ def upload_to_hopsworks(df):
         )
     
     print("  Inserting data into Feature Store...")
-    # Use storage="online" so external client communicates via REST/Kafka over HTTPS (bypasses direct HDFS)
-    aqi_fg.insert(
-        df,
-        storage="online",
-        write_options={"start_offline_materialization": True, "wait_for_job": False}
-    )
-    print("  ✓ Data uploaded to Hopsworks Feature Store!")
+    # Attempt insert with retries for Kafka authorization / topic readiness
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            aqi_fg.insert(
+                df,
+                storage="online",
+                write_options={"start_offline_materialization": True, "wait_for_job": False}
+            )
+            print("  ✓ Data uploaded to Hopsworks Feature Store!")
+            return
+        except Exception as e:
+            if attempt < max_retries and ("KafkaError" in str(type(e)) or "KafkaError" in str(e) or "AUTHORIZATION" in str(e).upper() or "TOPIC" in str(e).upper()):
+                print(f"  ⚠️ Kafka topic initializing (attempt {attempt}/{max_retries}). Retrying in 15s...")
+                time.sleep(15)
+            else:
+                raise e
 
 
 # ─────────────────────────────────────────────
