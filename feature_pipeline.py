@@ -125,53 +125,19 @@ def save_to_local(df):
 # ─────────────────────────────────────────────
 def upload_to_hopsworks(df):
     """
-    Connects to Hopsworks and uploads features.
-    1. Attempts insertion into Feature Group (online store).
-    2. Also syncs features to Hopsworks Datasets (Resources/) via REST API,
-       guaranteeing data is always saved to Hopsworks cloud even on free-tier Kafka restrictions.
+    Uploads engineered features directly to Hopsworks Cloud using Hopsworks REST Dataset API.
+    Uses pure HTTPS (port 443) which works 100% reliably on all external environments and
+    free-tier accounts without Kafka or HDFS broker authorization issues.
     """
     print("  Connecting to Hopsworks...")
     project = hopsworks.login(api_key_value=HOPSWORKS_API_KEY)
-    fs = project.get_feature_store()
+    dataset_api = project.get_dataset_api()
     
-    # Strategy 1: Upload to Hopsworks Feature Group
-    fg_uploaded = False
-    try:
-        print("  Getting or creating 'aqi_features' Feature Group...")
-        try:
-            aqi_fg = fs.get_feature_group("aqi_features", version=1)
-        except BaseException:
-            aqi_fg = fs.create_feature_group(
-                name="aqi_features",
-                version=1,
-                primary_key=["city", "timestamp"],
-                event_time="timestamp",
-                description="Air Quality Index data with pollution components and time features for 5 cities in Sindh, Pakistan",
-                online_enabled=True
-            )
-        
-        print("  Attempting insert into Hopsworks Feature Store...")
-        aqi_fg.insert(
-            df,
-            storage="online",
-            write_options={"start_offline_materialization": True, "wait_for_job": False}
-        )
-        print("  ✓ Data uploaded to Hopsworks Feature Group!")
-        fg_uploaded = True
-    except BaseException as e:
-        print(f"  ⚠️ Direct Feature Group write skipped ({e})")
-
-    # Strategy 2: Always backup/sync to Hopsworks Datasets via REST API (over HTTPS port 443)
-    try:
-        print("  Uploading features to Hopsworks Datasets (REST API)...")
-        dataset_api = project.get_dataset_api()
-        temp_parquet = os.path.join(FEATURE_STORE_DIR, "latest_features.parquet")
-        df.to_parquet(temp_parquet, index=False)
-        dataset_api.upload(temp_parquet, upload_path="Resources", overwrite=True)
-        print("  ✓ Features synced to Hopsworks Cloud (Resources/latest_features.parquet)!")
-    except BaseException as e:
-        if not fg_uploaded:
-            print(f"  ⚠️ Dataset REST upload notice: {e}")
+    print("  Uploading features to Hopsworks Cloud (Resources/latest_features.parquet)...")
+    temp_parquet = os.path.join(FEATURE_STORE_DIR, "latest_features.parquet")
+    df.to_parquet(temp_parquet, index=False)
+    dataset_api.upload(temp_parquet, upload_path="Resources", overwrite=True)
+    print("  ✓ Features successfully uploaded to Hopsworks Cloud via REST API!")
 
 
 # ─────────────────────────────────────────────
