@@ -125,21 +125,22 @@ def save_to_local(df):
 # ─────────────────────────────────────────────
 def upload_to_hopsworks(df):
     """
-    Connects to Hopsworks and uploads the DataFrame to the Feature Store.
-    Uses storage='online' to avoid direct HDFS writes from external clients.
-    Includes retry handling for Kafka topic readiness.
+    Connects to Hopsworks and uploads features.
+    1. Attempts insertion into Feature Group (online store).
+    2. Also syncs features to Hopsworks Datasets (Resources/) via REST API,
+       guaranteeing data is always saved to Hopsworks cloud even on free-tier Kafka restrictions.
     """
     print("  Connecting to Hopsworks...")
     project = hopsworks.login(api_key_value=HOPSWORKS_API_KEY)
     fs = project.get_feature_store()
     
-    print("  Getting or creating 'aqi_features' Feature Group...")
+    # Strategy 1: Upload to Hopsworks Feature Group
+    fg_uploaded = False
     try:
-        aqi_fg = fs.get_feature_group("aqi_features", version=1)
-        if not aqi_fg.online_enabled:
-            print("  ⚠️ Existing feature group has online_enabled=False. Recreating with online_enabled=True...")
-            aqi_fg.delete()
-            time.sleep(5)
+        print("  Getting or creating 'aqi_features' Feature Group...")
+        try:
+            aqi_fg = fs.get_feature_group("aqi_features", version=1)
+        except Exception:
             aqi_fg = fs.create_feature_group(
                 name="aqi_features",
                 version=1,
@@ -148,36 +149,30 @@ def upload_to_hopsworks(df):
                 description="Air Quality Index data with pollution components and time features for 5 cities in Sindh, Pakistan",
                 online_enabled=True
             )
-            print("  Waiting 15s for Kafka topic & ACL propagation...")
-            time.sleep(15)
-    except Exception:
-        aqi_fg = fs.get_or_create_feature_group(
-            name="aqi_features",
-            version=1,
-            primary_key=["city", "timestamp"],
-            event_time="timestamp",
-            description="Air Quality Index data with pollution components and time features for 5 cities in Sindh, Pakistan",
-            online_enabled=True
+        
+        print("  Attempting insert into Hopsworks Feature Store...")
+        aqi_fg.insert(
+            df,
+            storage="online",
+            write_options={"start_offline_materialization": True, "wait_for_job": False}
         )
-    
-    print("  Inserting data into Feature Store...")
-    # Attempt insert with retries for Kafka authorization / topic readiness
-    max_retries = 3
-    for attempt in range(1, max_retries + 1):
-        try:
-            aqi_fg.insert(
-                df,
-                storage="online",
-                write_options={"start_offline_materialization": True, "wait_for_job": False}
-            )
-            print("  ✓ Data uploaded to Hopsworks Feature Store!")
-            return
-        except Exception as e:
-            if attempt < max_retries and ("KafkaError" in str(type(e)) or "KafkaError" in str(e) or "AUTHORIZATION" in str(e).upper() or "TOPIC" in str(e).upper()):
-                print(f"  ⚠️ Kafka topic initializing (attempt {attempt}/{max_retries}). Retrying in 15s...")
-                time.sleep(15)
-            else:
-                raise e
+        print("  ✓ Data uploaded to Hopsworks Feature Group!")
+        fg_uploaded = True
+    except Exception as e:
+        print(f"  ⚠️ Direct Feature Group write skipped ({e})")
+
+    # Strategy 2: Always backup/sync to Hopsworks Datasets via REST API (over HTTPS port 443)
+    try:
+        print("  Uploading features to Hopsworks Datasets (REST API)...")
+        dataset_api = project.get_dataset_api()
+        temp_parquet = os.path.join(FEATURE_STORE_DIR, "latest_features.parquet")
+        df.to_parquet(temp_parquet, index=False)
+        dataset_api.upload(temp_parquet, upload_path="Resources", overwrite=True)
+        print("  ✓ Features synced to Hopsworks Cloud (Resources/latest_features.parquet)!")
+    except Exception as e:
+        if not fg_uploaded:
+            raise e
+        print(f"  ⚠️ Dataset REST upload notice: {e}")
 
 
 # ─────────────────────────────────────────────
@@ -208,24 +203,19 @@ if __name__ == "__main__":
     # Step 3: Save data
     print("\n[Step 3/3] Saving data...")
     
-    # 3A: Save locally (skip in CI — GitHub Actions runners are ephemeral)
-    if not IS_CI:
-        print("\n  --- Local Parquet Backup ---")
-        save_to_local(features_df)
-    else:
-        print("\n  --- Skipping local save (CI environment) ---")
+    # 3A: Save locally (always save to feature_store/)
+    print("\n  --- Local Parquet Backup ---")
+    save_to_local(features_df)
     
-    # 3B: Upload to Hopsworks Feature Store
-    print("\n  --- Hopsworks Feature Store ---")
+    # 3B: Upload to Hopsworks Feature Store & Datasets
+    print("\n  --- Hopsworks Cloud ---")
     try:
         upload_to_hopsworks(features_df)
     except Exception as e:
         print(f"  ✗ Hopsworks upload failed: {e}")
         if IS_CI:
-            print("  ✗ FATAL: Hopsworks upload is required in CI. Exiting with error.")
+            print("  ✗ FATAL: Hopsworks upload failed in CI. Exiting with error.")
             sys.exit(1)
-        else:
-            print("  ✗ Data is safe in the local Parquet backup.")
     
     print("\n" + "=" * 60)
     print("  PIPELINE COMPLETE!")

@@ -149,10 +149,12 @@ def main():
     print("=" * 60)
 
     # ── Step 1: Fetch data ──
-    print("\n[Step 1/5] Fetching data from Hopsworks Feature Store...")
+    print("\n[Step 1/5] Fetching data from Hopsworks & local repository...")
     project = hopsworks.login(api_key_value=HOPSWORKS_API_KEY)
     fs = project.get_feature_store()
 
+    df = None
+    # 1A. Try downloading training data via Feature View
     try:
         fg = fs.get_feature_group("aqi_features", version=1)
         try:
@@ -167,25 +169,40 @@ def main():
             )
 
         print("  Downloading data from Feature View...")
-        df, _ = feature_view.get_training_data(1)
-        print(f"  ✓ Fetched {len(df)} rows from Hopsworks.")
+        fv_df, _ = feature_view.get_training_data(1)
+        if fv_df is not None and len(fv_df) > 1000:
+            df = fv_df
+            print(f"  ✓ Fetched {len(df)} rows from Hopsworks Feature View.")
     except Exception as e:
-        print(f"  ✗ Hopsworks download failed: {e}")
-        print("  ! Falling back to local historical parquet file...")
+        print(f"  ⚠️ Hopsworks Feature View download notice: {e}")
+
+    # 1B. If Feature View didn't return full data, load the bundled historical dataset
+    if df is None or len(df) < 1000:
         local_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             "feature_store", "aqi_historical.parquet"
         )
-        if not os.path.exists(local_path):
-            print(f"  ✗ Local file not found: {local_path}")
-            print("  ✗ Cannot train without data. Exiting.")
-            sys.exit(1)
-        df = pd.read_parquet(local_path)
-        print(f"  ✓ Loaded {len(df)} rows from local backup.")
+        if os.path.exists(local_path):
+            df = pd.read_parquet(local_path)
+            print(f"  ✓ Loaded {len(df)} historical rows from repository backup.")
 
-    if len(df) < 100:
-        print(f"  ✗ Not enough data to train ({len(df)} rows). Need at least 100.")
+        # 1C. Also download the latest live features uploaded by feature pipeline
+        try:
+            dataset_api = project.get_dataset_api()
+            latest_path = dataset_api.download("Resources/latest_features.parquet", overwrite=True)
+            if os.path.exists(latest_path):
+                latest_df = pd.read_parquet(latest_path)
+                print(f"  ✓ Fetched {len(latest_df)} latest live rows from Hopsworks Cloud.")
+                df = pd.concat([df, latest_df], ignore_index=True)
+                df = df.drop_duplicates(subset=["city", "timestamp"], keep="last")
+        except Exception as e:
+            print(f"  (Latest cloud features check: {e})")
+
+    if df is None or len(df) < 100:
+        print(f"  ✗ Not enough data to train. Exiting.")
         sys.exit(1)
+
+    print(f"  ✓ Total dataset for training: {len(df)} rows.")
 
     # ── Step 2: Feature Engineering ──
     print("\n[Step 2/5] Engineering features and creating PM2.5 target...")

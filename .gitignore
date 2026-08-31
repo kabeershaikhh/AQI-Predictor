@@ -13,8 +13,9 @@ __pycache__/
 aqi_model_dir/
 models_archive/
 
-# Local data (stored in Hopsworks Feature Store)
-feature_store/
+# Local data (historical dataset is tracked for CI resilience; temporary files ignored)
+feature_store/*
+!feature_store/aqi_historical.parquet
 
 # IDE / Jupyter
 .ipynb_checkpoints/
