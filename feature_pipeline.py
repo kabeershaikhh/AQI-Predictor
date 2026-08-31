@@ -122,19 +122,30 @@ def save_to_local(df):
 
 # ─────────────────────────────────────────────
 # STEP 3B: UPLOAD TO HOPSWORKS FEATURE STORE
-# ─────────────────────────────────────────────
 def upload_to_hopsworks(df):
     """
     Uploads engineered features directly to Hopsworks Cloud using Hopsworks REST Dataset API.
-    Uses pure HTTPS (port 443) which works 100% reliably on all external environments and
-    free-tier accounts without Kafka or HDFS broker authorization issues.
+    Appends new hourly readings to the accumulated live dataset in Resources/latest_features.parquet.
+    Uses pure HTTPS (port 443) which works 100% reliably without Kafka or HDFS broker issues.
     """
     print("  Connecting to Hopsworks...")
     project = hopsworks.login(api_key_value=HOPSWORKS_API_KEY)
     dataset_api = project.get_dataset_api()
     
-    print("  Uploading features to Hopsworks Cloud (Resources/latest_features.parquet)...")
+    # Download existing live features if present and append new 5 rows
     temp_parquet = os.path.join(FEATURE_STORE_DIR, "latest_features.parquet")
+    try:
+        downloaded = dataset_api.download("Resources/latest_features.parquet", overwrite=True)
+        if os.path.exists(downloaded):
+            existing_df = pd.read_parquet(downloaded)
+            combined_df = pd.concat([existing_df, df], ignore_index=True)
+            combined_df = combined_df.drop_duplicates(subset=["city", "timestamp"], keep="last")
+            df = combined_df
+            print(f"  ✓ Appended new readings. Total accumulated live rows: {len(df)}")
+    except Exception:
+        print(f"  ✓ Initializing live dataset with {len(df)} rows.")
+
+    print("  Uploading features to Hopsworks Cloud (Resources/latest_features.parquet)...")
     df.to_parquet(temp_parquet, index=False)
     dataset_api.upload(temp_parquet, upload_path="Resources", overwrite=True)
     print("  ✓ Features successfully uploaded to Hopsworks Cloud via REST API!")
