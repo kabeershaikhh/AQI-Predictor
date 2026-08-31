@@ -132,17 +132,36 @@ def upload_to_hopsworks(df):
     fs = project.get_feature_store()
     
     print("  Getting or creating 'aqi_features' Feature Group...")
-    aqi_fg = fs.get_or_create_feature_group(
-        name="aqi_features",
-        version=1,
-        primary_key=["city", "timestamp"],
-        event_time="timestamp",
-        description="Air Quality Index data with pollution components and time features for 5 cities in Sindh, Pakistan",
-        online_enabled=False
-    )
+    try:
+        aqi_fg = fs.get_feature_group("aqi_features", version=1)
+        if not aqi_fg.online_enabled:
+            print("  ⚠️ Existing feature group has online_enabled=False. Recreating with online_enabled=True...")
+            aqi_fg.delete()
+            aqi_fg = fs.create_feature_group(
+                name="aqi_features",
+                version=1,
+                primary_key=["city", "timestamp"],
+                event_time="timestamp",
+                description="Air Quality Index data with pollution components and time features for 5 cities in Sindh, Pakistan",
+                online_enabled=True
+            )
+    except Exception:
+        aqi_fg = fs.get_or_create_feature_group(
+            name="aqi_features",
+            version=1,
+            primary_key=["city", "timestamp"],
+            event_time="timestamp",
+            description="Air Quality Index data with pollution components and time features for 5 cities in Sindh, Pakistan",
+            online_enabled=True
+        )
     
     print("  Inserting data into Feature Store...")
-    aqi_fg.insert(df, write_options={"wait_for_job": False})
+    # Use storage="online" so external client communicates via REST/Kafka over HTTPS (bypasses direct HDFS)
+    aqi_fg.insert(
+        df,
+        storage="online",
+        write_options={"start_offline_materialization": True, "wait_for_job": False}
+    )
     print("  ✓ Data uploaded to Hopsworks Feature Store!")
 
 
