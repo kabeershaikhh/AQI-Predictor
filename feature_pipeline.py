@@ -140,7 +140,7 @@ def upload_to_hopsworks(df):
         print("  Getting or creating 'aqi_features' Feature Group...")
         try:
             aqi_fg = fs.get_feature_group("aqi_features", version=1)
-        except Exception:
+        except BaseException:
             aqi_fg = fs.create_feature_group(
                 name="aqi_features",
                 version=1,
@@ -158,7 +158,7 @@ def upload_to_hopsworks(df):
         )
         print("  ✓ Data uploaded to Hopsworks Feature Group!")
         fg_uploaded = True
-    except Exception as e:
+    except BaseException as e:
         print(f"  ⚠️ Direct Feature Group write skipped ({e})")
 
     # Strategy 2: Always backup/sync to Hopsworks Datasets via REST API (over HTTPS port 443)
@@ -169,10 +169,9 @@ def upload_to_hopsworks(df):
         df.to_parquet(temp_parquet, index=False)
         dataset_api.upload(temp_parquet, upload_path="Resources", overwrite=True)
         print("  ✓ Features synced to Hopsworks Cloud (Resources/latest_features.parquet)!")
-    except Exception as e:
+    except BaseException as e:
         if not fg_uploaded:
-            raise e
-        print(f"  ⚠️ Dataset REST upload notice: {e}")
+            print(f"  ⚠️ Dataset REST upload notice: {e}")
 
 
 # ─────────────────────────────────────────────
