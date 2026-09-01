@@ -276,16 +276,22 @@ st.markdown(f"""
         box-shadow: 0 0 8px #10b981;
     }}
 
-    /* Theme Switcher in top right */
-    div[data-testid="stSegmentedControl"] {{
-        border-radius: 25px;
-    }}
-    div[data-testid="stSegmentedControl"] button {{
-        padding: 0.35rem 0.85rem !important;
-        font-size: 1.1rem !important;
-        min-width: 42px !important;
-        border-radius: 25px !important;
-    }}
+    /* Theme Toggle Circular Button */
+    div[data-testid="stButton"] button {
+        border-radius: 50% !important;
+        width: 44px !important;
+        height: 44px !important;
+        padding: 0 !important;
+        font-size: 1.3rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+    }
+    div[data-testid="stButton"] button:hover {
+        transform: rotate(18deg) scale(1.12) !important;
+    }
 
     /* Hero Header */
     .hero-header {{
@@ -797,15 +803,11 @@ def main():
         """, unsafe_allow_html=True)
 
     with col_theme:
-        theme_icon = st.segmented_control(
-            "Theme",
-            options=["☀️", "🌙"],
-            default="🌙" if is_dark else "☀️",
-            label_visibility="collapsed"
-        )
-        new_theme = "dark" if theme_icon == "🌙" else "light"
-        if new_theme != st.session_state.theme:
-            st.session_state.theme = new_theme
+        toggle_icon = "🌙" if not is_dark else "☀️"
+        toggle_tooltip = "Switch to Night Mode" if not is_dark else "Switch to Light Mode"
+        
+        if st.button(toggle_icon, key="theme_toggle_btn", help=toggle_tooltip):
+            st.session_state.theme = "dark" if not is_dark else "light"
             st.rerun()
 
     # ── Hero Header ──
