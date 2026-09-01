@@ -277,7 +277,7 @@ st.markdown(f"""
     }}
 
     /* Theme Toggle Circular Button */
-    div[data-testid="stButton"] button {
+    div[data-testid="stButton"] button {{
         border-radius: 50% !important;
         width: 44px !important;
         height: 44px !important;
@@ -288,10 +288,10 @@ st.markdown(f"""
         justify-content: center !important;
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
-    }
-    div[data-testid="stButton"] button:hover {
+    }}
+    div[data-testid="stButton"] button:hover {{
         transform: rotate(18deg) scale(1.12) !important;
-    }
+    }}
 
     /* Hero Header */
     .hero-header {{
