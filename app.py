@@ -1,10 +1,14 @@
 """
 🌬️ Sindh Air Quality Index — 3-Day ML Forecast Dashboard
 ===========================================================
-Modern, production-grade 72-hour AQI forecasting dashboard
+Ultra-modern dark-mode 72-hour AQI forecasting dashboard
 for 5 cities in Sindh, Pakistan.
 
-Inspired by Apple Weather, Linear, and Vercel design aesthetics.
+Features:
+  - Permanent Sleek Dark / Cyberpunk Aesthetic
+  - Single 3-Day Average Hero Gauge + Daily Forecast Breakdown (Day 1, 2, 3)
+  - Pure Machine Learning Forecasting (RandomForest Model v5)
+  - Interactive Dark Cartography & SHAP Model Telemetry
 
 Run with: streamlit run app.py
 """
@@ -30,14 +34,14 @@ load_dotenv()
 # PAGE CONFIG
 # ─────────────────────────────────────────────
 st.set_page_config(
-    page_title="Sindh Air Quality Forecast",
-    page_icon="🌬️",
+    page_title="Sindh AQI — 3-Day ML Forecast",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
 # ─────────────────────────────────────────────
-# CONSTANTS & COLOR PALETTE
+# CONSTANTS & DARK PALETTES
 # ─────────────────────────────────────────────
 CITIES = {
     "Karachi":   {"lat": 24.8607, "lon": 67.0011, "emoji": "🏙️"},
@@ -51,342 +55,278 @@ POLLUTANTS = ['pm2_5', 'pm10', 'co', 'no2', 'o3', 'so2', 'nh3', 'no']
 ROLLING_POLLUTANTS = ['pm2_5', 'pm10', 'co', 'o3']
 LAG_HOURS = [1, 6, 12, 24]
 
-# High-contrast production color tokens
+# Pure Dark-Mode Color Palette (Glowing High-Contrast)
 AQI_THEME = {
-    "Good": {
-        "color": "#10b981",
-        "bg": "rgba(16, 185, 129, 0.15)",
-        "border": "rgba(16, 185, 129, 0.35)",
-        "text": "#34d399",
-        "label": "Good"
-    },
-    "Moderate": {
-        "color": "#f59e0b",
-        "bg": "rgba(245, 158, 11, 0.15)",
-        "border": "rgba(245, 158, 11, 0.35)",
-        "text": "#fbbf24",
-        "label": "Moderate"
-    },
-    "Unhealthy for Sensitive Groups": {
-        "color": "#f97316",
-        "bg": "rgba(249, 115, 22, 0.15)",
-        "border": "rgba(249, 115, 22, 0.35)",
-        "text": "#fb923c",
-        "label": "Unhealthy (Sensitive)"
-    },
-    "Unhealthy": {
-        "color": "#ef4444",
-        "bg": "rgba(239, 68, 68, 0.15)",
-        "border": "rgba(239, 68, 68, 0.35)",
-        "text": "#f87171",
-        "label": "Unhealthy"
-    },
-    "Very Unhealthy": {
-        "color": "#a855f7",
-        "bg": "rgba(168, 85, 247, 0.15)",
-        "border": "rgba(168, 85, 247, 0.35)",
-        "text": "#c084fc",
-        "label": "Very Unhealthy"
-    },
-    "Hazardous": {
-        "color": "#e11d48",
-        "bg": "rgba(225, 29, 72, 0.2)",
-        "border": "rgba(225, 29, 72, 0.4)",
-        "text": "#fda4af",
-        "label": "Hazardous"
-    },
+    "Good": {"color": "#10b981", "bg": "rgba(16,185,129,0.18)", "border": "rgba(16,185,129,0.5)", "text": "#34d399"},
+    "Moderate": {"color": "#f59e0b", "bg": "rgba(245,158,11,0.18)", "border": "rgba(245,158,11,0.5)", "text": "#fbbf24"},
+    "Unhealthy for Sensitive Groups": {"color": "#f97316", "bg": "rgba(249,115,22,0.18)", "border": "rgba(249,115,22,0.5)", "text": "#fb923c"},
+    "Unhealthy": {"color": "#ef4444", "bg": "rgba(239,68,68,0.18)", "border": "rgba(239,68,68,0.5)", "text": "#f87171"},
+    "Very Unhealthy": {"color": "#a855f7", "bg": "rgba(168,85,247,0.18)", "border": "rgba(168,85,247,0.5)", "text": "#c084fc"},
+    "Hazardous": {"color": "#e11d48", "bg": "rgba(225,29,72,0.22)", "border": "rgba(225,29,72,0.6)", "text": "#fda4af"},
 }
 
 AQI_HEALTH_MESSAGES = {
-    "Good": "Air quality is expected to be clean and safe for all outdoor activities. 🌳",
-    "Moderate": "Air quality is acceptable. Sensitive individuals should consider limiting prolonged outdoor exertion. 😷",
-    "Unhealthy for Sensitive Groups": "Particulate levels are elevated. Children, elderly, and those with respiratory conditions should reduce outdoor exposure. ⚠️",
-    "Unhealthy": "Air quality is unhealthy. Everyone should reduce prolonged outdoor exertion and consider wearing masks. 🚨",
-    "Very Unhealthy": "Health warning: High pollution levels. Avoid outdoor physical activities and keep windows closed. 🔴",
-    "Hazardous": "Emergency health advisory: Severe pollution expected. Everyone should remain indoors. 🆘",
+    "Good": "Atmospheric conditions nominal. Ideal for all outdoor operations. 🌳",
+    "Moderate": "Acceptable air composition. Sensitive personnel should monitor prolonged exposure. 😷",
+    "Unhealthy for Sensitive Groups": "Elevated particulate density. Sensitive groups should reduce outdoor activity. ⚠️",
+    "Unhealthy": "Unhealthy atmospheric envelope. Filtration masks advised, restrict outdoor transit. 🚨",
+    "Very Unhealthy": "Hazardous particulate saturation. Limit environmental exposure immediately. 🔴",
+    "Hazardous": "CRITICAL ENVIRONMENTAL ALERT: Extreme toxicity levels. Maintain indoor containment. 🆘",
 }
 
 # ─────────────────────────────────────────────
-# PRODUCTION CSS (Apple Weather / Vercel Aesthetic)
+# PURE DARK CSS (Sleek, High-Tech, Flawless)
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-    /* Global Reset */
+    /* Clean layout */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {display: none;}
 
     body, .stApp {
-        background-color: #0b0f19 !important;
+        background-color: #0b1120 !important;
         background-image: 
-            radial-gradient(circle at 10% 10%, rgba(37, 99, 235, 0.08) 0, transparent 40%),
-            radial-gradient(circle at 90% 90%, rgba(139, 92, 246, 0.06) 0, transparent 40%) !important;
+            radial-gradient(at 15% 15%, rgba(2, 132, 199, 0.08) 0px, transparent 50%),
+            radial-gradient(at 85% 85%, rgba(168, 85, 247, 0.08) 0px, transparent 50%) !important;
         color: #f8fafc !important;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
     }
 
     .main .block-container {
-        padding-top: 1.2rem;
-        padding-bottom: 2.5rem;
-        max-width: 1140px;
+        padding-top: 0.8rem;
+        padding-bottom: 2rem;
+        max-width: 1200px;
     }
 
-    /* Top Brand Navigation */
-    .brand-header {
+    /* Top HUD Bar */
+    .top-hud-bar {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 1.2rem;
-        padding-bottom: 0.8rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        margin-bottom: 0.8rem;
     }
-    .brand-title {
-        font-size: 1.45rem;
+    .hud-status-badge {
+        font-family: 'SF Mono', 'Fira Code', monospace;
+        font-size: 0.74rem;
+        letter-spacing: 1.2px;
         font-weight: 700;
-        letter-spacing: -0.5px;
-        color: #ffffff;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .brand-badge {
-        font-size: 0.76rem;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        background: rgba(37, 99, 235, 0.15);
-        color: #60a5fa;
-        border: 1px solid rgba(37, 99, 235, 0.3);
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 7px;
+        color: #38bdf8;
     }
-    .status-dot {
-        width: 6px;
-        height: 6px;
+    .live-dot {
+        width: 8px;
+        height: 8px;
         background: #10b981;
         border-radius: 50%;
+        box-shadow: 0 0 10px #10b981;
+        animation: pulse-glow 2s infinite ease-in-out;
+    }
+    @keyframes pulse-glow {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.3); opacity: 0.6; }
     }
 
-    /* City Selector Pills */
-    .city-nav-wrap {
+    /* Hero Header */
+    .hero-header {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0369a1 100%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        padding: 1.8rem 2rem;
+        border-radius: 22px;
+        margin-bottom: 1.4rem;
+        text-align: center;
+    }
+    .hero-header h1 {
+        margin: 0;
+        font-size: 2.3rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        color: #ffffff !important;
+    }
+    .hero-header p {
+        margin: 0.35rem 0 0 0;
+        font-size: 1.02rem;
+        font-weight: 400;
+        color: #94a3b8 !important;
+    }
+    .hud-chips-row {
         display: flex;
         justify-content: center;
-        margin-bottom: 1.6rem;
+        gap: 0.75rem;
+        margin-top: 0.85rem;
+    }
+    .hud-chip {
+        font-family: 'SF Mono', 'Fira Code', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.8px;
+        font-weight: 700;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #38bdf8;
+    }
+
+    /* City Selector Container */
+    .city-selector-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1.4rem;
     }
     div[data-testid="stPills"] {
         display: flex;
         justify-content: center;
-        gap: 0.6rem;
+        gap: 0.75rem;
     }
     div[data-testid="stPills"] button {
-        background: rgba(255, 255, 255, 0.04) !important;
-        color: #94a3b8 !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        font-size: 0.95rem !important;
-        font-weight: 600 !important;
-        padding: 0.55rem 1.4rem !important;
-        border-radius: 25px !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        font-size: 1.05rem !important;
+        font-weight: 700 !important;
+        padding: 0.65rem 1.6rem !important;
+        border-radius: 35px !important;
+        background: #1e293b !important;
+        color: #cbd5e1 !important;
+        border: 1px solid #334155 !important;
+        transition: all 0.2s ease !important;
     }
     div[data-testid="stPills"] button:hover {
-        background: rgba(255, 255, 255, 0.08) !important;
+        background: #334155 !important;
         color: #ffffff !important;
-        border-color: rgba(255, 255, 255, 0.2) !important;
     }
     div[data-testid="stPills"] button[aria-selected="true"] {
-        background: #2563eb !important;
+        background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
-        border-color: #3b82f6 !important;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
+        border-color: #38bdf8 !important;
+        box-shadow: 0 4px 18px rgba(2, 132, 199, 0.45) !important;
+        transform: scale(1.04);
     }
 
-    /* Weather Hero Cards */
-    .weather-card {
-        background: rgba(18, 24, 38, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 20px;
-        padding: 1.6rem;
-        backdrop-filter: blur(20px);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    /* Clean Card Boxes */
+    .card-box {
+        background: #111827;
+        border: 1px solid #1f2937;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        border-radius: 22px;
+        padding: 1.5rem 1.4rem;
         height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
     }
-
-    /* Hero Big Number */
-    .hero-card-header {
-        font-size: 0.8rem;
-        font-weight: 700;
+    .hero-top-badge {
+        font-family: 'SF Mono', 'Fira Code', monospace;
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 800;
         letter-spacing: 1px;
         text-transform: uppercase;
-        color: #64748b;
-        margin-bottom: 0.4rem;
-    }
-    .hero-location {
-        font-size: 1.35rem;
-        font-weight: 700;
-        color: #f8fafc;
-        margin-bottom: 1rem;
-    }
-    .hero-num-row {
-        display: flex;
-        align-items: baseline;
-        gap: 16px;
-        margin-bottom: 0.6rem;
-    }
-    .hero-aqi-number {
-        font-size: 4.8rem;
-        font-weight: 800;
-        line-height: 1;
-        letter-spacing: -2px;
-    }
-    .hero-category-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.95rem;
-        font-weight: 700;
-        padding: 0.35rem 0.95rem;
+        padding: 0.35rem 1rem;
         border-radius: 20px;
-        margin-bottom: 1.2rem;
+        margin-bottom: 0.5rem;
     }
 
-    /* Apple Weather Style Horizontal Slider Bar */
-    .aqi-slider-wrap {
-        margin: 1rem 0 1.4rem 0;
-    }
-    .aqi-slider-track {
-        height: 7px;
-        border-radius: 10px;
-        background: linear-gradient(to right, 
-            #10b981 0%, #10b981 10%, 
-            #f59e0b 10%, #f59e0b 20%, 
-            #f97316 20%, #f97316 30%, 
-            #ef4444 30%, #ef4444 40%, 
-            #a855f7 40%, #a855f7 60%, 
-            #e11d48 60%, #e11d48 100%);
-        position: relative;
-        box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
-    }
-    .aqi-slider-thumb {
-        position: absolute;
-        top: -4.5px;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: #ffffff;
-        box-shadow: 0 0 8px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(255, 255, 255, 0.4);
-        transform: translateX(-50%);
-    }
-    .aqi-slider-labels {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.72rem;
-        color: #64748b;
-        font-weight: 600;
-        margin-top: 6px;
-    }
-
-    /* Quick Stat Chips */
-    .meta-chip-row {
-        display: flex;
-        gap: 0.75rem;
-    }
-    .meta-chip {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        padding: 0.5rem 0.9rem;
-        font-size: 0.82rem;
-        color: #cbd5e1;
-    }
-    .meta-chip b {
-        color: #ffffff;
-    }
-
-    /* 3-Day Daily Rows */
-    .daily-list {
+    /* Daily Breakdown Telemetry Cards */
+    .daily-breakdown-container {
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
+        gap: 0.85rem;
+        height: 100%;
+        justify-content: space-between;
     }
-    .day-row {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 14px;
-        padding: 0.95rem 1.2rem;
+    .day-row-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 18px;
+        padding: 1.1rem 1.4rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
         transition: all 0.2s ease;
     }
-    .day-row:hover {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.12);
-        transform: translateX(3px);
+    .day-row-card:hover {
+        background: #273549;
+        border-color: #475569;
+        transform: translateX(4px);
     }
-    .day-title {
-        font-size: 1rem;
-        font-weight: 700;
-        color: #f8fafc;
-    }
-    .day-sub {
-        font-size: 0.78rem;
-        color: #64748b;
-    }
-    .day-aqi-tag {
+    .day-label {
         font-size: 1.05rem;
         font-weight: 800;
-        padding: 0.35rem 0.9rem;
-        border-radius: 20px;
+        color: #f8fafc;
+        margin-bottom: 0.15rem;
+    }
+    .day-date {
+        font-size: 0.82rem;
+        color: #94a3b8;
+    }
+    .day-aqi-pill {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        padding: 0.45rem 1.15rem;
+        border-radius: 25px;
+        font-weight: 800;
+        font-size: 1.15rem;
     }
 
-    /* Health Banner */
-    .health-banner {
-        background: rgba(18, 24, 38, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        padding: 1.2rem 1.5rem;
+    /* Health Alert Banner */
+    .health-alert {
+        border-radius: 18px;
+        padding: 1.2rem 1.6rem;
         margin: 1.4rem 0;
         display: flex;
         align-items: center;
         gap: 16px;
-        backdrop-filter: blur(20px);
+        font-size: 1rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     }
-    .health-icon {
-        font-size: 1.8rem;
+    .health-alert-icon {
+        font-size: 2.2rem;
         flex-shrink: 0;
     }
 
-    /* Tabs Styling */
-    .stTabs [data-baseweb="tab-list"] {
+    /* Stat Pill Row */
+    .stat-pill-row {
+        display: flex;
+        justify-content: center;
+        gap: 0.8rem;
+        margin-top: 0.6rem;
+    }
+    .stat-pill {
+        background: #1e293b;
+        border: 1px solid #334155;
+        color: #f1f5f9;
+        padding: 0.45rem 0.95rem;
+        border-radius: 16px;
+        font-size: 0.84rem;
+        font-weight: 700;
+    }
+
+    /* Section Header */
+    .section-header {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #f8fafc;
+        margin: 1.8rem 0 0.9rem 0;
+        padding-bottom: 0.4rem;
+        display: flex;
+        align-items: center;
         gap: 8px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        padding-bottom: 4px;
+    }
+
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
     }
     .stTabs [data-baseweb="tab"] {
-        border-radius: 10px;
-        padding: 8px 18px;
-        font-size: 0.9rem;
-        font-weight: 600;
+        border-radius: 12px;
+        padding: 9px 22px;
+        font-size: 0.95rem;
         color: #94a3b8 !important;
-        background: transparent !important;
-        border: none !important;
-    }
-    .stTabs [data-baseweb="tab"]:hover {
-        color: #ffffff !important;
-        background: rgba(255, 255, 255, 0.04) !important;
+        background: #111827 !important;
+        border: 1px solid #1f2937 !important;
     }
     .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        color: #ffffff !important;
-        background: rgba(37, 99, 235, 0.2) !important;
-        border-bottom: 2px solid #3b82f6 !important;
+        color: #38bdf8 !important;
+        background: #1e293b !important;
+        border-color: #0284c7 !important;
+        font-weight: 800 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -395,9 +335,9 @@ st.markdown("""
 # ─────────────────────────────────────────────
 # DATA & MODEL LOADING
 # ─────────────────────────────────────────────
-@st.cache_resource(show_spinner="Loading model from Hopsworks Model Registry...")
+@st.cache_resource(show_spinner="Connecting to Hopsworks & initializing neural weights...")
 def load_model():
-    """Load trained RandomForest model and feature metadata."""
+    """Load the trained RandomForest model and feature names."""
     base_dir = os.path.dirname(os.path.abspath(__file__))
     model_dir = os.path.join(base_dir, "aqi_model_dir")
 
@@ -407,7 +347,7 @@ def load_model():
         if api_key:
             project = hopsworks.login(api_key_value=api_key)
             mr = project.get_model_registry()
-            hw_model = mr.get_model("aqi_prediction_model", version=None)
+            hw_model = mr.get_model("aqi_prediction_model", version=None)  # latest
             hw_model_dir = hw_model.download()
             model = joblib.load(os.path.join(hw_model_dir, "aqi_model.pkl"))
             feature_names = joblib.load(os.path.join(hw_model_dir, "feature_names.pkl"))
@@ -423,7 +363,7 @@ def load_model():
     return None, None, None
 
 
-@st.cache_data(ttl=3600, show_spinner="Loading air quality data...")
+@st.cache_data(ttl=3600, show_spinner="Synchronizing atmospheric telemetry from Hopsworks Cloud...")
 def load_data():
     """Load historical baseline + latest cloud features."""
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -463,7 +403,7 @@ def load_data():
 
 
 # ─────────────────────────────────────────────
-# FEATURE ENGINEERING & 3-DAY ML FORECASTING
+# FEATURE ENGINEERING & 3-DAY MULTI-STEP FORECASTING
 # ─────────────────────────────────────────────
 def engineer_features(df):
     """Engineer features identical to training pipeline for inference."""
@@ -505,7 +445,7 @@ def engineer_features(df):
 
 
 def predict_3_days_for_city(model, feature_names, df_engineered, city_name):
-    """Generate 3-day (+24h, +48h, +72h) predictions using autoregressive ML."""
+    """Generate 3-day (+24h, +48h, +72h) PM2.5 and EPA AQI predictions."""
     city_col = f"city_{city_name}"
     if city_col not in df_engineered.columns:
         return None
@@ -517,6 +457,7 @@ def predict_3_days_for_city(model, feature_names, df_engineered, city_name):
         return None
 
     latest_row = city_data.iloc[-1:].copy()
+    
     base_time = pd.to_datetime(latest_row['timestamp'].values[0])
     if pd.isna(base_time):
         base_time = datetime.now()
@@ -553,7 +494,7 @@ def predict_3_days_for_city(model, feature_names, df_engineered, city_name):
             "health_msg": AQI_HEALTH_MESSAGES.get(category, "")
         })
 
-        # Autoregressive lag updates
+        # Autoregressive update
         current_features['pm2_5_lag_24h'] = current_features['pm2_5']
         current_features['pm2_5'] = pred_pm25
         current_features['pm2_5_lag_1h'] = pred_pm25
@@ -574,10 +515,48 @@ def predict_3_days_for_city(model, feature_names, df_engineered, city_name):
 
 
 # ─────────────────────────────────────────────
-# PLOTLY VISUALIZATIONS
+# UI & PLOTLY HELPER FUNCTIONS
 # ─────────────────────────────────────────────
-def render_trajectory_chart(forecasts, city_name):
-    """Render a clean, production-grade 72h trajectory curve."""
+def render_hero_gauge(value, category_text, theme_cfg):
+    """Render a high-contrast dark semicircular AQI gauge."""
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=value,
+        number={"font": {"size": 60, "color": theme_cfg["color"], "family": "Inter, sans-serif"}, "suffix": ""},
+        gauge={
+            "axis": {"range": [0, 500], "tickwidth": 1.5, "tickcolor": "#94a3b8",
+                     "tickvals": [0, 50, 100, 150, 200, 300, 500],
+                     "ticktext": ["0", "50", "100", "150", "200", "300", "500"],
+                     "tickfont": {"color": "#94a3b8", "size": 11}},
+            "bar": {"color": theme_cfg["color"], "thickness": 0.38},
+            "bgcolor": "rgba(255,255,255,0.05)",
+            "borderwidth": 0,
+            "steps": [
+                {"range": [0, 50], "color": "rgba(16, 185, 129, 0.2)"},
+                {"range": [50, 100], "color": "rgba(245, 158, 11, 0.2)"},
+                {"range": [100, 150], "color": "rgba(249, 115, 22, 0.2)"},
+                {"range": [150, 200], "color": "rgba(239, 68, 68, 0.2)"},
+                {"range": [200, 300], "color": "rgba(168, 85, 247, 0.2)"},
+                {"range": [300, 500], "color": "rgba(225, 29, 72, 0.2)"},
+            ],
+            "threshold": {
+                "line": {"color": theme_cfg["color"], "width": 4},
+                "thickness": 0.88,
+                "value": value
+            }
+        }
+    ))
+    fig.update_layout(
+        height=230,
+        margin=dict(l=15, r=15, t=15, b=0),
+        paper_bgcolor="rgba(0,0,0,0)",
+        font={"family": "Inter, sans-serif"}
+    )
+    return fig
+
+
+def render_3day_trajectory(forecasts, city_name):
+    """Render dark-mode 3-day AQI prediction trajectory area chart."""
     days = [f"{f['day_name']} ({f['date_str']})" for f in forecasts]
     aqis = [f["epa_aqi"] for f in forecasts]
     pm25s = [f["pm2_5"] for f in forecasts]
@@ -591,37 +570,37 @@ def render_trajectory_chart(forecasts, city_name):
         name='Predicted AQI',
         text=[f"AQI {a}" for a in aqis],
         textposition="top center",
-        textfont=dict(size=12, weight="bold", color="#f8fafc"),
-        line=dict(color="#3b82f6", width=3, shape='spline'),
-        marker=dict(size=10, color="#3b82f6", line=dict(width=2, color='#ffffff')),
+        textfont=dict(size=13, weight="bold", color="#f8fafc"),
+        line=dict(color="#38bdf8", width=3.5, shape='spline'),
+        marker=dict(size=12, color="#38bdf8", line=dict(width=2, color='white')),
         fill='tozeroy',
-        fillcolor="rgba(59, 130, 246, 0.12)",
+        fillcolor="rgba(56, 189, 248, 0.15)",
         hovertemplate="<b>%{x}</b><br>Predicted EPA AQI: %{y}<br>Predicted PM2.5: %{customdata:.1f} µg/m³<extra></extra>",
         customdata=pm25s
     ))
 
-    # Reference levels
-    fig.add_hline(y=50, line_dash="dot", line_color="rgba(16, 185, 129, 0.6)", annotation_text="Good (50)", annotation_position="bottom right", annotation_font=dict(color="#10b981", size=10))
-    fig.add_hline(y=100, line_dash="dash", line_color="rgba(245, 158, 11, 0.6)", annotation_text="Moderate (100)", annotation_position="bottom right", annotation_font=dict(color="#f59e0b", size=10))
-    fig.add_hline(y=150, line_dash="dash", line_color="rgba(249, 115, 22, 0.6)", annotation_text="Unhealthy (150)", annotation_position="bottom right", annotation_font=dict(color="#f97316", size=10))
+    # EPA Threshold lines
+    fig.add_hline(y=50, line_dash="dot", line_color="#10b981", annotation_text="Good (50)", annotation_position="bottom right")
+    fig.add_hline(y=100, line_dash="dash", line_color="#f59e0b", annotation_text="Moderate (100)", annotation_position="bottom right")
+    fig.add_hline(y=150, line_dash="dash", line_color="#f97316", annotation_text="Unhealthy (150)", annotation_position="bottom right")
 
     fig.update_layout(
-        title=dict(text=f"72-Hour AQI Trend Curve — {city_name}", font=dict(size=15, color="#f8fafc")),
+        title=dict(text=f"72-Hour Air Quality Forecast Curve — {city_name}", font=dict(size=16, color="#f8fafc")),
         yaxis_title="Predicted EPA AQI",
-        height=300,
-        margin=dict(l=35, r=20, t=45, b=25),
+        height=320,
+        margin=dict(l=40, r=20, t=50, b=30),
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        yaxis=dict(gridcolor="rgba(255, 255, 255, 0.06)", range=[0, max(max(aqis) * 1.35, 160)], tickfont=dict(color="#94a3b8", size=11)),
-        xaxis=dict(gridcolor="rgba(255, 255, 255, 0.06)", tickfont=dict(color="#94a3b8", size=11)),
-        font=dict(family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif"),
+        yaxis=dict(gridcolor="#334155", range=[0, max(max(aqis) * 1.35, 170)], tickfont=dict(color="#f8fafc")),
+        xaxis=dict(gridcolor="#334155", tickfont=dict(color="#f8fafc")),
+        font=dict(family="Inter, sans-serif"),
         showlegend=False
     )
     return fig
 
 
-def render_regional_map(city_forecasts_dict):
-    """Create clean dark-mode OpenStreetMap with color-coded AQI pins."""
+def render_city_forecast_map(city_forecasts_dict):
+    """Create an interactive dark cartographic map showing 3-day forecast markers for all cities."""
     lats, lons, names, avg_aqis, colors, sizes, texts = [], [], [], [], [], [], []
 
     for city_name, info in CITIES.items():
@@ -636,14 +615,14 @@ def render_regional_map(city_forecasts_dict):
             names.append(city_name)
             avg_aqis.append(avg_aqi)
             colors.append(theme_cfg["color"])
-            sizes.append(max(22, min(avg_aqi / 4.2, 50)))
+            sizes.append(max(26, min(avg_aqi / 4.0, 60)))
             
             text = (
-                f"<b>{city_name}</b><br>"
-                f"• 3-Day Avg AQI: <b>{avg_aqi} ({avg_cat})</b><br>"
-                f"• Tomorrow: AQI {fc[0]['epa_aqi']}<br>"
-                f"• Day 2: AQI {fc[1]['epa_aqi']}<br>"
-                f"• Day 3: AQI {fc[2]['epa_aqi']}"
+                f"<b>{city_name} [3-DAY AI FORECAST]</b><br>"
+                f"• <b>3-Day Avg AQI: {avg_aqi} ({avg_cat})</b><br>"
+                f"• {fc[0]['day_name']}: AQI {fc[0]['epa_aqi']} ({fc[0]['category']})<br>"
+                f"• {fc[1]['day_name']}: AQI {fc[1]['epa_aqi']} ({fc[1]['category']})<br>"
+                f"• {fc[2]['day_name']}: AQI {fc[2]['epa_aqi']} ({fc[2]['category']})"
             )
             texts.append(text)
 
@@ -652,10 +631,10 @@ def render_regional_map(city_forecasts_dict):
     fig.add_trace(go.Scattermapbox(
         lat=lats, lon=lons,
         mode='markers+text',
-        marker=dict(size=sizes, color=colors, opacity=0.9, sizemode='diameter'),
+        marker=dict(size=sizes, color=colors, opacity=0.92, sizemode='diameter'),
         text=names,
         textposition="top center",
-        textfont=dict(size=12, color="#ffffff", family="-apple-system, sans-serif"),
+        textfont=dict(size=12, family="Inter, sans-serif", color="white"),
         hovertext=texts,
         hoverinfo='text',
     ))
@@ -666,7 +645,7 @@ def render_regional_map(city_forecasts_dict):
             center=dict(lat=26.0, lon=68.0),
             zoom=6.2,
         ),
-        height=380,
+        height=400,
         margin=dict(l=0, r=0, t=0, b=0),
         paper_bgcolor='rgba(0,0,0,0)',
     )
@@ -677,38 +656,51 @@ def render_regional_map(city_forecasts_dict):
 # MAIN APPLICATION
 # ─────────────────────────────────────────────
 def main():
-    # ── Top Navigation Bar ──
+    # ── Top HUD Status Bar ──
     st.markdown("""
-    <div class="brand-header">
-        <div class="brand-title">
-            <span>🌬️</span>
-            <span>Sindh Air Quality Forecast</span>
+    <div class="top-hud-bar">
+        <div class="hud-status-badge">
+            <span class="live-dot"></span>
+            <span>NEURAL INFERENCE ACTIVE • SINDH REGION • 72H WINDOW</span>
         </div>
-        <div class="brand-badge">
-            <span class="status-dot"></span>
-            <span>RandomForest Model v5 • 72-Hour Prediction</span>
+        <div class="hud-status-badge" style="color: #94a3b8;">
+            <span>HOPSWORKS MODEL REGISTRY (RF-v5)</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Load Model & Features ──
+    # ── Hero Header ──
+    st.markdown("""
+    <div class="hero-header">
+        <h1>🌬️ Sindh Air Quality — 3-Day ML Forecast</h1>
+        <p>72-hour machine learning predictions across Sindh, powered by RandomForest AI (Model v5)</p>
+        <div class="hud-chips-row">
+            <span class="hud-chip">MODEL: RF-V5 (300 TREES)</span>
+            <span class="hud-chip">ACCURACY: R² 74.7%</span>
+            <span class="hud-chip">HOPSWORKS FEATURE STORE</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Load Data & Model ──
     model, feature_names, model_version = load_model()
     raw_df = load_data()
 
     if raw_df is None or raw_df.empty:
-        st.error("❌ No air quality data available. Please run the feature pipeline first.")
+        st.error("❌ No air quality data found. Please run the feature pipeline first.")
         st.stop()
 
     if model is None or feature_names is None:
         st.error("❌ Model not loaded from Hopsworks Model Registry. Please run the training pipeline first.")
         st.stop()
 
+    # ── Engineer features for inference ──
     df_eng = engineer_features(raw_df)
 
-    # ── City Selector (Clean Floating Pills) ──
+    # ── City Selector (Pill Buttons) ──
     city_options = list(CITIES.keys())
     
-    st.markdown('<div class="city-nav-wrap">', unsafe_allow_html=True)
+    st.markdown('<div class="city-selector-container">', unsafe_allow_html=True)
     selected_city = st.pills(
         "Select City",
         city_options,
@@ -721,7 +713,7 @@ def main():
     if not selected_city:
         selected_city = "Karachi"
 
-    # ── Compute 3-Day ML Predictions ──
+    # ── Compute 3-Day Predictions for All Cities ──
     all_city_forecasts = {}
     for city_name in city_options:
         fc = predict_3_days_for_city(model, feature_names, df_eng, city_name)
@@ -733,124 +725,110 @@ def main():
         st.error(f"❌ Unable to generate 3-day forecast for {selected_city}.")
         st.stop()
 
-    # 3-Day Summary Metrics
+    # Calculate 3-Day Averages
     avg_aqi = round(sum(f['epa_aqi'] for f in selected_forecasts) / len(selected_forecasts))
     avg_pm25 = sum(f['pm2_5'] for f in selected_forecasts) / len(selected_forecasts)
     avg_category, _ = get_aqi_category(avg_aqi)
     avg_theme = AQI_THEME.get(avg_category, AQI_THEME["Moderate"])
 
-    # Trend calculation
+    # Trend calculation (Day 3 vs Day 1)
     diff_aqi = selected_forecasts[2]['epa_aqi'] - selected_forecasts[0]['epa_aqi']
-    if diff_aqi <= -4:
-        trend_text = f"Improving (↓ {abs(diff_aqi)} AQI)"
+    if diff_aqi <= -5:
+        trend_label = f"📉 Improving (↓ {abs(diff_aqi)} AQI)"
         trend_color = "#10b981"
-    elif diff_aqi >= 4:
-        trend_text = f"Increasing (↑ {diff_aqi} AQI)"
+    elif diff_aqi >= 5:
+        trend_label = f"📈 Increasing (↑ {diff_aqi} AQI)"
         trend_color = "#ef4444"
     else:
-        trend_text = "Stable (±2 AQI)"
-        trend_color = "#60a5fa"
+        trend_label = "➡️ Stable (±3 AQI)"
+        trend_color = "#38bdf8"
 
-    # Slider thumb position on 0-500 scale
-    thumb_pct = min(max((avg_aqi / 500) * 100, 2), 98)
-
-    # ── Hero Section (Left: Apple Weather Style Card | Right: Daily Strip) ──
+    # ── Top Row: Single 3-Day Average Hero Gauge + Daily Breakdown Cards ──
     col_left, col_right = st.columns([1.15, 1.25])
 
     with col_left:
         st.markdown(f"""
-        <div class="weather-card">
+        <div class="card-box" style="border-top: 5px solid {avg_theme['color']}; text-align: center; box-shadow: 0 0 35px {avg_theme['color']}25;">
             <div>
-                <div class="hero-card-header">3-Day Average Outlook</div>
-                <div class="hero-location">{CITIES[selected_city]['emoji']} {selected_city}, Sindh</div>
-                
-                <div class="hero-num-row">
-                    <div class="hero-aqi-number" style="color: {avg_theme['text']};">{avg_aqi}</div>
-                    <div style="color: #64748b; font-size: 1.1rem; font-weight: 600;">AQI</div>
-                </div>
-
-                <div class="hero-category-pill" style="background: {avg_theme['bg']}; color: {avg_theme['text']}; border: 1px solid {avg_theme['border']};">
-                    <span style="width: 8px; height: 8px; border-radius: 50%; background: {avg_theme['color']};"></span>
-                    <span>{avg_category}</span>
-                </div>
-
-                <!-- Apple Weather Horizontal AQI Spectrum Slider -->
-                <div class="aqi-slider-wrap">
-                    <div class="aqi-slider-track">
-                        <div class="aqi-slider-thumb" style="left: {thumb_pct}%;"></div>
-                    </div>
-                    <div class="aqi-slider-labels">
-                        <span>0 Good</span>
-                        <span>100 Mod</span>
-                        <span>200 Unhealthy</span>
-                        <span>500+</span>
-                    </div>
+                <span class="hero-top-badge" style="background: {avg_theme['bg']}; color: {avg_theme['text']}; border: 1.5px solid {avg_theme['border']};">
+                    ⚡ 3-DAY AVERAGE PREDICTION
+                </span>
+                <div class="card-title" style="font-size: 1.35rem; font-weight: 800; margin-top: 0.3rem;">
+                    {CITIES[selected_city]['emoji']} {selected_city}, Sindh
                 </div>
             </div>
+        """, unsafe_allow_html=True)
 
-            <div class="meta-chip-row">
-                <div class="meta-chip">Avg PM2.5: <b>{avg_pm25:.1f} µg/m³</b></div>
-                <div class="meta-chip" style="color: {trend_color};">Trend: <b>{trend_text}</b></div>
+        fig_hero = render_hero_gauge(avg_aqi, avg_category, avg_theme)
+        st.plotly_chart(fig_hero, use_container_width=True)
+
+        st.markdown(f"""
+            <div style="margin-top: -10px;">
+                <div style="font-size: 1.5rem; font-weight: 800; color: {avg_theme['text']}; margin-bottom: 0.4rem;">
+                    {avg_category}
+                </div>
+                <div class="stat-pill-row">
+                    <span class="stat-pill">💨 Avg PM2.5: <b>{avg_pm25:.1f} µg/m³</b></span>
+                    <span class="stat-pill" style="color: {trend_color};">Trend: <b>{trend_label}</b></span>
+                </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
     with col_right:
-        st.markdown('<div class="weather-card"><div class="hero-card-header" style="margin-bottom: 0.8rem;">Daily Forecast Breakdown</div><div class="daily-list">', unsafe_allow_html=True)
+        st.markdown('<div class="daily-breakdown-container">', unsafe_allow_html=True)
         
         for fc in selected_forecasts:
             t = fc['theme']
             st.markdown(f"""
-            <div class="day-row">
+            <div class="day-row-card" style="border-left: 6px solid {t['color']};">
                 <div>
-                    <div class="day-title">{fc['day_name']} <span style="font-size: 0.8rem; color: #64748b; font-weight: 500;">({fc['step_label']})</span></div>
-                    <div class="day-sub">{fc['date_str']}</div>
+                    <div class="day-label">{fc['day_name']} ({fc['step_label']})</div>
+                    <div class="day-date">{fc['date_str']}</div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="display: flex; align-items: center; gap: 18px;">
                     <div style="text-align: right;">
-                        <div style="font-size: 0.75rem; color: #64748b;">PM2.5</div>
-                        <div style="font-size: 0.95rem; font-weight: 700; color: #f8fafc;">{fc['pm2_5']:.1f} µg/m³</div>
+                        <span style="font-size: 0.78rem; color: #94a3b8;">Predicted PM2.5</span><br>
+                        <span style="font-size: 1.05rem; font-weight: 800; color: #f8fafc;">{fc['pm2_5']:.1f} µg/m³</span>
                     </div>
-                    <div class="day-aqi-tag" style="background: {t['bg']}; color: {t['text']}; border: 1px solid {t['border']};">
+                    <div class="day-aqi-pill" style="background: {t['bg']}; color: {t['text']}; border: 1.5px solid {t['border']};">
                         AQI {fc['epa_aqi']}
                     </div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
             
-        st.markdown('</div></div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── Health Advisory Banner ──
+    # ── 3-Day Health Advisory Banner ──
     highest_risk_day = max(selected_forecasts, key=lambda x: x['epa_aqi'])
     risk_t = highest_risk_day['theme']
     risk_cat = highest_risk_day['category']
     risk_msg = highest_risk_day['health_msg']
-    alert_icon = "🌳" if highest_risk_day['epa_aqi'] <= 50 else "😷" if highest_risk_day['epa_aqi'] <= 100 else "⚠️" if highest_risk_day['epa_aqi'] <= 150 else "🚨"
+    alert_icon = "✅" if highest_risk_day['epa_aqi'] <= 50 else "⚠️" if highest_risk_day['epa_aqi'] <= 150 else "🚨" if highest_risk_day['epa_aqi'] <= 300 else "🆘"
 
     st.markdown(f"""
-    <div class="health-banner" style="border-left: 4px solid {risk_t['color']};">
-        <div class="health-icon">{alert_icon}</div>
+    <div class="health-alert" style="background: {risk_t['bg']}; border: 1.5px solid {risk_t['border']}; border-left: 6px solid {risk_t['color']}; color: {risk_t['text']};">
+        <span class="health-alert-icon">{alert_icon}</span>
         <div>
-            <div style="font-size: 0.98rem; font-weight: 700; color: #f8fafc; margin-bottom: 2px;">
-                Health Advisory • Peak risk on {highest_risk_day['day_name']} ({highest_risk_day['date_str']}) — AQI {highest_risk_day['epa_aqi']} ({risk_cat})
-            </div>
-            <div style="font-size: 0.88rem; color: #94a3b8;">
-                {risk_msg}
-            </div>
+            <strong style="font-size: 1.05rem;">3-Day Health Advisory for {selected_city}:</strong> Peak risk predicted on <b>{highest_risk_day['day_name']} ({highest_risk_day['date_str']})</b> with an AQI of <b>{highest_risk_day['epa_aqi']} ({risk_cat})</b>.<br>
+            <span style="opacity: 0.95; font-size: 0.95rem;">{risk_msg}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Tabs Section ──
+    # ── Tabs: 3-Day Trajectory | Regional Map | All Cities Comparison | Model Info ──
+    st.markdown("")
     tab1, tab2, tab3, tab4 = st.tabs([
-        "📈 Forecast Curve", "🗺️ Regional Map", "🏙️ City Comparison", "🤖 Model Info"
+        "📊 3-Day Trajectory", "🗺️ 5-City Forecast Map", "🏙️ All Cities Comparison", "🤖 AI Model & SHAP"
     ])
 
     with tab1:
+        st.markdown('<div class="section-header">📈 3-Day Forecast Trajectory & Trends</div>', unsafe_allow_html=True)
         col_traj, col_hist = st.columns([1.2, 1])
 
         with col_traj:
-            fig_traj = render_trajectory_chart(selected_forecasts, selected_city)
+            fig_traj = render_3day_trajectory(selected_forecasts, selected_city)
             st.plotly_chart(fig_traj, use_container_width=True)
 
         with col_hist:
@@ -866,25 +844,26 @@ def main():
                     x=city_ts_7['timestamp'], y=city_ts_7['pm2_5'],
                     mode='lines', name='PM2.5',
                     line=dict(color="#38bdf8", width=2.5),
-                    fill='tozeroy', fillcolor="rgba(56, 189, 248, 0.1)",
+                    fill='tozeroy', fillcolor="rgba(56, 189, 248, 0.15)",
                     hovertemplate='<b>%{x}</b><br>PM2.5: %{y:.1f} µg/m³<extra></extra>'
                 ))
                 fig_hist.update_layout(
-                    title=dict(text=f"Historical Baseline (Last 7 Days)", font=dict(size=15, color="#f8fafc")),
+                    title=dict(text=f"Historical PM2.5 Context (Past 7 Days)", font=dict(size=16, color="#f8fafc")),
                     yaxis_title="PM2.5 (µg/m³)",
-                    height=300,
-                    margin=dict(l=35, r=20, t=45, b=25),
+                    height=320,
+                    margin=dict(l=40, r=20, t=50, b=30),
                     plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                    yaxis=dict(gridcolor="rgba(255, 255, 255, 0.06)", tickfont=dict(color="#94a3b8", size=11)),
-                    xaxis=dict(gridcolor="rgba(255, 255, 255, 0.06)", tickfont=dict(color="#94a3b8", size=11)),
-                    font=dict(family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif"),
+                    yaxis=dict(gridcolor="#334155", tickfont=dict(color="#f8fafc")),
+                    xaxis=dict(gridcolor="#334155", tickfont=dict(color="#f8fafc")),
+                    font=dict(family="Inter, sans-serif"),
                     showlegend=False
                 )
                 st.plotly_chart(fig_hist, use_container_width=True)
 
     with tab2:
-        st.caption("3-day average forecasted AQI across Sindh. Click or hover on any marker for daily predictions.")
-        fig_map = render_regional_map(all_city_forecasts)
+        st.markdown('<div class="section-header">🗺️ Sindh Regional 3-Day Forecast Map</div>', unsafe_allow_html=True)
+        st.caption("Pins represent 3-day average forecasted AQI. Hover over each city pin for full Day 1, Day 2, and Day 3 breakdown.")
+        fig_map = render_city_forecast_map(all_city_forecasts)
         st.plotly_chart(fig_map, use_container_width=True)
 
         # 5-city forecast cards below map
@@ -897,16 +876,18 @@ def main():
                 t = AQI_THEME.get(c_cat, AQI_THEME["Moderate"])
                 with map_cols[i]:
                     st.markdown(f"""
-                    <div style="text-align:center; padding: 0.9rem 0.5rem; border-radius: 14px;
-                                background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
-                        <div style="font-size: 1.2rem;">{CITIES[city_name]['emoji']}</div>
-                        <div style="font-weight: 700; font-size: 0.95rem; color: #f8fafc; margin: 0.2rem 0;">{city_name}</div>
-                        <div style="font-size: 1.35rem; font-weight: 800; color: {t['text']};">Avg {c_avg}</div>
-                        <div style="font-size: 0.75rem; color: {t['text']}; font-weight: 600;">{c_cat}</div>
+                    <div style="text-align:center; padding: 1rem 0.6rem; border-radius: 18px;
+                                background: {t['bg']}; border: 1.5px solid {t['border']}; box-shadow: 0 4px 15px rgba(0,0,0,0.25);">
+                        <div style="font-size: 1.3rem;">{CITIES[city_name]['emoji']}</div>
+                        <div style="font-weight: 800; font-size: 1rem; color: #f8fafc; margin: 0.2rem 0;">{city_name}</div>
+                        <div style="font-size: 1.4rem; font-weight: 800; color: {t['text']};">Avg {c_avg}</div>
+                        <div style="font-size: 0.76rem; color: {t['text']}; font-weight: 700;">{c_cat}</div>
                     </div>
                     """, unsafe_allow_html=True)
 
     with tab3:
+        st.markdown('<div class="section-header">🏙️ All 5 Cities — 3-Day Forecast Matrix</div>', unsafe_allow_html=True)
+        
         matrix_data = []
         for city_name in city_options:
             fc = all_city_forecasts.get(city_name, [])
@@ -915,7 +896,7 @@ def main():
                 matrix_data.append({
                     "City": f"{CITIES[city_name]['emoji']} {city_name}",
                     "3-Day Avg AQI": f"{c_avg} ({get_aqi_category(c_avg)[0]})",
-                    "Tomorrow (+24h)": f"{fc[0]['epa_aqi']} ({fc[0]['category']}) • {fc[0]['pm2_5']:.1f} µg/m³",
+                    "Day 1 Tomorrow (+24h)": f"{fc[0]['epa_aqi']} ({fc[0]['category']}) • {fc[0]['pm2_5']:.1f} µg/m³",
                     "Day 2 (+48h)": f"{fc[1]['epa_aqi']} ({fc[1]['category']}) • {fc[1]['pm2_5']:.1f} µg/m³",
                     "Day 3 (+72h)": f"{fc[2]['epa_aqi']} ({fc[2]['category']}) • {fc[2]['pm2_5']:.1f} µg/m³",
                 })
@@ -924,35 +905,37 @@ def main():
         st.dataframe(matrix_df, use_container_width=True, hide_index=True)
 
     with tab4:
+        st.markdown('<div class="section-header">🤖 AI Model & Interpretability (SHAP)</div>', unsafe_allow_html=True)
         col_m1, col_m2 = st.columns(2)
         with col_m1:
+            st.success(f"✅ Active Model: RandomForest (Version {model_version})")
             st.markdown(f"""
-            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1.2rem;">
-                <div style="font-size: 1.05rem; font-weight: 700; color: #38bdf8; margin-bottom: 0.8rem;">
-                    Active Model: RandomForest (Version {model_version})
-                </div>
-                <table style="width: 100%; font-size: 0.88rem; color: #cbd5e1;">
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);"><td style="padding: 6px 0; color: #94a3b8;">Algorithm</td><td style="font-weight: 600; text-align: right;">RandomForest Regressor</td></tr>
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);"><td style="padding: 6px 0; color: #94a3b8;">Trees / Depth</td><td style="font-weight: 600; text-align: right;">300 Trees / Max Depth 20</td></tr>
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);"><td style="padding: 6px 0; color: #94a3b8;">Features</td><td style="font-weight: 600; text-align: right;">{len(feature_names)} Lagged & Rolling</td></tr>
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);"><td style="padding: 6px 0; color: #94a3b8;">PM2.5 Performance</td><td style="font-weight: 600; text-align: right; color: #10b981;">R² = 74.7% (RMSE = 23.9)</td></tr>
-                    <tr><td style="padding: 6px 0; color: #94a3b8;">Registry</td><td style="font-weight: 600; text-align: right;">Hopsworks Model Registry</td></tr>
-                </table>
-            </div>
-            """, unsafe_allow_html=True)
+            | Architecture Parameter | Value |
+            |---|---|
+            | **Model Type** | RandomForest Regressor |
+            | **Ensemble Trees** | 300 Estimators |
+            | **Max Depth** | 20 Levels |
+            | **Feature Dimensions** | {len(feature_names)} Lagged & Rolling Features |
+            | **Target Variable** | PM2.5 (24h, 48h, 72h Ahead) |
+            | **Training Source** | Hopsworks Model Registry (Auto-Retrained Daily) |
+            | **PM2.5 Accuracy** | **R² = 74.7%** (RMSE = 23.9 µg/m³) |
+            """)
 
         with col_m2:
+            st.markdown('**SHAP Feature Importance Summary**')
             shap_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                      "images", "shap_summary.png")
             if os.path.exists(shap_path):
-                st.image(shap_path, use_container_width=True, caption="SHAP Feature Importance Summary")
+                st.image(shap_path, use_container_width=True)
             else:
-                st.info("SHAP feature importance plot is generated during the daily training pipeline.")
+                st.info("SHAP explanation plot is generated during the daily training pipeline.")
 
     # ── Footer ──
+    st.markdown("---")
     st.markdown("""
-    <div style="text-align: center; color: #475569; font-size: 0.8rem; margin-top: 2rem; padding: 1rem 0; border-top: 1px solid rgba(255,255,255,0.06);">
-        Sindh Air Quality Forecast • Continuous ML pipeline powered by Hopsworks Cloud & GitHub Actions
+    <div style="text-align: center; color: #94a3b8; font-size: 0.84rem; padding: 0.8rem;">
+        <strong>Sindh Air Quality Index System</strong> • 72-Hour Predictions Generated by RandomForest AI •
+        Powered by Hopsworks Cloud & GitHub Actions CI/CD
     </div>
     """, unsafe_allow_html=True)
 
