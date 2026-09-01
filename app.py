@@ -89,147 +89,203 @@ POLLUTANT_INFO = {
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-    /* Hide default Streamlit elements for cleaner look */
+    /* Clean layout */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {display: none;}
 
-    /* Main container */
     .main .block-container {
         padding-top: 1rem;
-        padding-bottom: 1rem;
+        padding-bottom: 2rem;
         max-width: 1200px;
     }
 
-    /* Hero header */
+    /* Hero Header */
     .hero-header {
-        background: linear-gradient(135deg, #1a5276 0%, #2e86c1 50%, #3498db 100%);
-        padding: 1.5rem 2rem;
-        border-radius: 16px;
-        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #0f2b48 0%, #1a5276 50%, #2980b9 100%);
+        padding: 1.8rem 2rem;
+        border-radius: 18px;
+        margin-bottom: 1.2rem;
         color: white;
         text-align: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
     .hero-header h1 {
         margin: 0;
-        font-size: 2rem;
-        font-weight: 700;
+        font-size: 2.2rem;
+        font-weight: 800;
         letter-spacing: -0.5px;
     }
     .hero-header p {
-        margin: 0.3rem 0 0 0;
-        font-size: 0.95rem;
+        margin: 0.4rem 0 0 0;
+        font-size: 1rem;
         opacity: 0.9;
+        font-weight: 400;
     }
 
-    /* AQI main card */
-    .aqi-card {
-        border-radius: 16px;
+    /* City Selector Container */
+    .city-selector-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1.2rem;
+    }
+
+    /* Modern Streamlit Pills styling */
+    div[data-testid="stPills"] {
+        display: flex;
+        justify-content: center;
+        gap: 0.6rem;
+    }
+    div[data-testid="stPills"] button {
+        font-size: 1.05rem !important;
+        font-weight: 600 !important;
+        padding: 0.6rem 1.4rem !important;
+        border-radius: 30px !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
+        transition: all 0.25s ease !important;
+    }
+    div[data-testid="stPills"] button[aria-selected="true"] {
+        background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%) !important;
+        color: white !important;
+        border-color: #00c6ff !important;
+        box-shadow: 0 4px 15px rgba(0, 198, 255, 0.4) !important;
+        transform: scale(1.04);
+    }
+
+    /* Gauge Card Container */
+    .gauge-container {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 18px;
+        padding: 1rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    .gauge-badge {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        margin-bottom: 0.5rem;
+    }
+    .badge-live {
+        background: rgba(231, 76, 60, 0.2);
+        color: #ff6b6b;
+        border: 1px solid rgba(231, 76, 60, 0.4);
+    }
+    .badge-ai {
+        background: rgba(0, 198, 255, 0.2);
+        color: #00c6ff;
+        border: 1px solid rgba(0, 198, 255, 0.4);
+    }
+
+    /* Health Status Card */
+    .health-card {
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 18px;
         padding: 1.5rem;
         text-align: center;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        transition: transform 0.2s;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        border: 1.5px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.2s ease;
     }
-    .aqi-card:hover {
-        transform: translateY(-2px);
+    .health-card:hover {
+        transform: translateY(-3px);
     }
-    .aqi-value {
-        font-size: 3.5rem;
+    .health-icon {
+        font-size: 3.2rem;
+        margin-bottom: 0.4rem;
+    }
+    .health-category {
+        font-size: 1.3rem;
         font-weight: 800;
-        line-height: 1;
-        margin: 0.5rem 0;
+        margin-bottom: 0.3rem;
     }
-    .aqi-label {
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+    .health-location {
+        font-size: 0.95rem;
         opacity: 0.8;
-    }
-    .aqi-category {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-top: 0.3rem;
+        font-weight: 500;
     }
 
-    /* Health alert banner */
+    /* Health Alert Banner */
     .health-alert {
-        border-radius: 12px;
-        padding: 1rem 1.5rem;
-        margin: 1rem 0;
+        border-radius: 14px;
+        padding: 1.1rem 1.6rem;
+        margin: 1.2rem 0;
         display: flex;
         align-items: center;
-        gap: 12px;
-        font-size: 0.95rem;
+        gap: 14px;
+        font-size: 1rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
     .health-alert-icon {
-        font-size: 1.8rem;
+        font-size: 2rem;
+        flex-shrink: 0;
     }
 
-    /* Pollutant cards */
+    /* Pollutant Cards */
     .pollutant-card {
-        background: #f8f9fa;
-        border-radius: 12px;
-        padding: 0.8rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 14px;
+        padding: 0.9rem 0.6rem;
         text-align: center;
-        border: 1px solid #e9ecef;
+        backdrop-filter: blur(10px);
+        transition: all 0.2s ease;
+    }
+    .pollutant-card:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
     }
     .pollutant-value {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: #2c3e50;
+        font-size: 1.35rem;
+        font-weight: 800;
+        margin: 0.2rem 0;
     }
     .pollutant-name {
-        font-size: 0.75rem;
-        color: #7f8c8d;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    /* Section headers */
-    .section-header {
-        font-size: 1.2rem;
+        font-size: 0.8rem;
         font-weight: 700;
-        color: #2c3e50;
-        margin: 1.5rem 0 0.8rem 0;
+        letter-spacing: 0.5px;
+        opacity: 0.8;
+    }
+    .pollutant-unit {
+        font-size: 0.65rem;
+        opacity: 0.6;
+    }
+
+    /* Section Header */
+    .section-header {
+        font-size: 1.25rem;
+        font-weight: 800;
+        margin: 1.8rem 0 0.9rem 0;
         padding-bottom: 0.4rem;
-        border-bottom: 2px solid #3498db;
-        display: inline-block;
-    }
-
-    /* City selector pills */
-    div[data-testid="stRadio"] > div {
-        flex-direction: row;
-        gap: 0.5rem;
-    }
-    div[data-testid="stRadio"] label {
-        background: #f0f2f6;
-        padding: 0.5rem 1.2rem;
-        border-radius: 25px;
-        cursor: pointer;
-        transition: all 0.2s;
-        border: 2px solid transparent;
-    }
-    div[data-testid="stRadio"] label:hover {
-        background: #e1e5eb;
-    }
-    div[data-testid="stRadio"] label[data-checked="true"] {
-        background: #3498db;
-        color: white;
-        border-color: #2980b9;
-    }
-
-    /* Metric delta styling */
-    [data-testid="stMetricDelta"] {
-        font-size: 0.85rem;
-    }
-
-    /* Tab styling */
-    .stTabs [data-baseweb="tab-list"] {
+        display: flex;
+        align-items: center;
         gap: 8px;
     }
+
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
     .stTabs [data-baseweb="tab"] {
-        border-radius: 8px;
-        padding: 8px 20px;
+        border-radius: 10px;
+        padding: 10px 22px;
+        font-weight: 600;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -586,15 +642,21 @@ def main():
         st.error("❌ No data available. Please run the feature pipeline first.")
         st.stop()
 
-    # ── City Selector (Pill Buttons) ──
+    # ── City Selector (Modern Weather App Pills) ──
     city_options = list(CITIES.keys())
-    selected_city = st.radio(
+    
+    st.markdown('<div class="city-selector-container">', unsafe_allow_html=True)
+    selected_city = st.pills(
         "Select City",
         city_options,
-        horizontal=True,
-        index=0,
+        format_func=lambda c: f"{CITIES[c]['emoji']}  {c}",
+        default="Karachi",
         label_visibility="collapsed"
     )
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    if not selected_city:
+        selected_city = "Karachi"
 
     # ── Get Latest Data for Each City ──
     city_data_dict = {}
@@ -642,32 +704,42 @@ def main():
     col1, col2, col3 = st.columns([2, 2, 2])
 
     with col1:
+        st.markdown("""
+        <div class="gauge-container">
+            <span class="gauge-badge badge-live">🔴 LIVE SENSOR READING (OpenWeather)</span>
+        """, unsafe_allow_html=True)
         fig_current = render_aqi_gauge(
             current_aqi,
-            "Current EPA AQI",
-            f"Dominant: {current.get('dominant_pollutant', 'PM2.5')}"
+            f"{selected_city} Current AQI",
+            f"Dominant: {current.get('dominant_pollutant', 'PM2.5')} • Real-Time"
         )
         st.plotly_chart(fig_current, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
+        st.markdown("""
+        <div class="gauge-container">
+            <span class="gauge-badge badge-ai">🤖 24-HOUR AI FORECAST (Model v5)</span>
+        """, unsafe_allow_html=True)
         if predicted_aqi is not None:
             fig_forecast = render_aqi_gauge(
                 predicted_aqi,
-                "24h Forecast",
-                f"Predicted PM2.5: {predicted_pm25:.1f} µg/m³"
+                f"Tomorrow's Forecast",
+                f"Predicted PM2.5: {predicted_pm25:.1f} µg/m³ • 24h Ahead"
             )
             st.plotly_chart(fig_forecast, use_container_width=True)
         else:
             st.info("Model not loaded — prediction unavailable")
+        st.markdown('</div>', unsafe_allow_html=True)
 
     with col3:
         st.markdown(f"""
-        <div class="aqi-card" style="background: linear-gradient(135deg, {current_color}22, {current_color}44); border: 2px solid {current_color};">
-            <div class="aqi-label">Health Status</div>
-            <div class="aqi-value" style="color: {current_color};">{CITIES[selected_city]['emoji']}</div>
-            <div class="aqi-category" style="color: {current_color};">{current_category}</div>
-            <div style="margin-top: 0.8rem; font-size: 0.8rem; color: #555;">
-                {selected_city}, Sindh
+        <div class="health-card" style="border-color: {current_color}; box-shadow: 0 0 25px {current_color}30;">
+            <div class="health-icon">{CITIES[selected_city]['emoji']}</div>
+            <div class="health-location">{selected_city}, Sindh</div>
+            <div class="health-category" style="color: {current_color};">{current_category}</div>
+            <div style="font-size: 0.82rem; opacity: 0.7; margin-top: 0.4rem;">
+                Dominant: <b>{current.get('dominant_pollutant', 'PM2.5')}</b> ({current.get('pm2_5', 0):.1f} µg/m³)
             </div>
         </div>
         """, unsafe_allow_html=True)
