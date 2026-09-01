@@ -276,21 +276,33 @@ st.markdown(f"""
         box-shadow: 0 0 8px #10b981;
     }}
 
-    /* Theme Toggle Circular Button */
-    div[data-testid="stButton"] button {{
+    /* Futuristic Circular Dual-Icon Switcher */
+    div[data-testid="stSegmentedControl"] {{
+        border-radius: 35px !important;
+        padding: 3px !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+    }}
+    div[data-testid="stSegmentedControl"] button {{
         border-radius: 50% !important;
-        width: 44px !important;
-        height: 44px !important;
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
         padding: 0 !important;
-        font-size: 1.3rem !important;
+        font-size: 1.15rem !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        border: none !important;
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
     }}
-    div[data-testid="stButton"] button:hover {{
-        transform: rotate(18deg) scale(1.12) !important;
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"] {{
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15) !important;
+        transform: scale(1.08) !important;
+    }}
+    div[data-testid="stSegmentedControl"] button:hover {{
+        transform: scale(1.05) !important;
     }}
 
     /* Hero Header */
@@ -803,11 +815,15 @@ def main():
         """, unsafe_allow_html=True)
 
     with col_theme:
-        toggle_icon = "🌙" if not is_dark else "☀️"
-        toggle_tooltip = "Switch to Night Mode" if not is_dark else "Switch to Light Mode"
-        
-        if st.button(toggle_icon, key="theme_toggle_btn", help=toggle_tooltip):
-            st.session_state.theme = "dark" if not is_dark else "light"
+        current_selection = "🌙" if is_dark else "☀️"
+        theme_icon = st.segmented_control(
+            "Theme Switcher",
+            options=["☀️", "🌙"],
+            default=current_selection,
+            label_visibility="collapsed"
+        )
+        if theme_icon and theme_icon != current_selection:
+            st.session_state.theme = "dark" if theme_icon == "🌙" else "light"
             st.rerun()
 
     # ── Hero Header ──
