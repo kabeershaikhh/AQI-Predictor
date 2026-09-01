@@ -415,12 +415,12 @@ def render_aqi_gauge(value, title, subtitle=""):
             "bgcolor": "#f8f9fa",
             "borderwidth": 0,
             "steps": [
-                {"range": [0, 50], "color": "#2ecc7133"},
-                {"range": [50, 100], "color": "#f1c40f33"},
-                {"range": [100, 150], "color": "#e67e2233"},
-                {"range": [150, 200], "color": "#e74c3c33"},
-                {"range": [200, 300], "color": "#8e44ad33"},
-                {"range": [300, 500], "color": "#7f1d1d33"},
+                {"range": [0, 50], "color": "rgba(46,204,113,0.2)"},
+                {"range": [50, 100], "color": "rgba(241,196,15,0.2)"},
+                {"range": [100, 150], "color": "rgba(230,126,34,0.2)"},
+                {"range": [150, 200], "color": "rgba(231,76,60,0.2)"},
+                {"range": [200, 300], "color": "rgba(142,68,173,0.2)"},
+                {"range": [300, 500], "color": "rgba(127,29,29,0.2)"},
             ],
             "threshold": {
                 "line": {"color": color, "width": 3},
