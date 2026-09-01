@@ -584,21 +584,26 @@ def render_city_forecast_map(city_forecasts_dict):
     fig.add_trace(go.Scattermapbox(
         lat=lats, lon=lons,
         mode='markers+text',
-        marker=dict(size=sizes, color=colors, opacity=0.92, sizemode='diameter'),
-        text=names,
+        marker=dict(
+            size=[30, 30, 30, 30, 30],
+            color=colors,
+            opacity=0.95,
+            allowoverlap=True
+        ),
+        text=[f"<b>{name}</b> (AQI {aqi})" for name, aqi in zip(names, avg_aqis)],
         textposition="top center",
-        textfont=dict(size=12, family="Inter, sans-serif", color="white"),
+        textfont=dict(size=12, family="Inter, sans-serif", color="#0f172a"),
         hovertext=texts,
         hoverinfo='text',
     ))
 
     fig.update_layout(
         mapbox=dict(
-            style="carto-darkmatter",
+            style="open-street-map",
             center=dict(lat=26.28, lon=68.10),
             zoom=5.5,
         ),
-        height=460,
+        height=480,
         margin=dict(l=0, r=0, t=0, b=0),
         paper_bgcolor='rgba(0,0,0,0)',
     )
