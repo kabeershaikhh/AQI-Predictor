@@ -595,10 +595,10 @@ def render_city_forecast_map(city_forecasts_dict):
     fig.update_layout(
         mapbox=dict(
             style="carto-darkmatter",
-            center=dict(lat=26.0, lon=68.0),
-            zoom=6.2,
+            center=dict(lat=26.28, lon=68.10),
+            zoom=5.5,
         ),
-        height=400,
+        height=460,
         margin=dict(l=0, r=0, t=0, b=0),
         paper_bgcolor='rgba(0,0,0,0)',
     )
