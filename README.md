@@ -1,11 +1,5 @@
-# 🌬️ Sindh Air Quality Prediction System (72-Hour ML Forecast)
+# Sindh Air Quality Prediction System (72-Hour ML Forecast)
 > **An End-to-End Serverless Machine Learning System for Multi-City Air Quality Forecasting in Sindh, Pakistan.**
-
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.42+-FF4B4B.svg)](https://streamlit.io/)
-[![Hopsworks Feature Store](https://img.shields.io/badge/Hopsworks-Feature%20Store%20%26%20Model%20Registry-00A699.svg)](https://www.hopsworks.ai/)
-[![GitHub Actions CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF.svg)](https://github.com/features/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
@@ -64,37 +58,37 @@ The system follows the modern **FTI (Feature-Training-Inference)** serverless ML
 
 ```mermaid
 flowchart TD
-    subgraph Data Sources
-        API[OpenWeather Air Pollution API]
+    subgraph DS["Data Sources"]
+        API["OpenWeather Air Pollution API"]
     end
 
-    subgraph Feature Pipeline [GitHub Actions - Hourly Cron]
-        F1[Fetch Live Pollutants for 5 Sindh Cities]
-        F2[Feature Engineering: Lags, Rolling Stats, Cyclical Time]
-        F3[Data Validation & Schema Checks]
+    subgraph FP["Feature Pipeline (GitHub Actions - Hourly Cron)"]
+        F1["Fetch Live Pollutants for 5 Sindh Cities"]
+        F2["Feature Engineering: Lags, Rolling Stats, Cyclical Time"]
+        F3["Data Validation & Schema Checks"]
     end
 
-    subgraph Feature Store [Hopsworks Cloud]
-        FS[(Hopsworks Feature Store / Parquet Dataset)]
+    subgraph FS_BOX["Feature Store (Hopsworks Cloud)"]
+        FS[("Hopsworks Feature Store / Parquet Dataset")]
     end
 
-    subgraph Training Pipeline [GitHub Actions - Daily Cron]
-        T1[Pull Historical + Latest Features]
-        T2[Temporal Train / Test Split]
-        T3[Train Models: RF, XGBoost, Ridge, Neural Net]
-        T4[Model Evaluation & SHAP Interpretability]
-        T5[Register Promoted Model]
+    subgraph TP["Training Pipeline (GitHub Actions - Daily Cron)"]
+        T1["Pull Historical + Latest Features"]
+        T2["Temporal Train / Test Split"]
+        T3["Train Models: RF, XGBoost, Ridge, Neural Net"]
+        T4["Model Evaluation & SHAP Interpretability"]
+        T5["Register Promoted Model"]
     end
 
-    subgraph Model Registry [Hopsworks Cloud]
-        MR[(Hopsworks Model Registry v5)]
+    subgraph MR_BOX["Model Registry (Hopsworks Cloud)"]
+        MR[("Hopsworks Model Registry v5")]
     end
 
-    subgraph Inference & UI [Streamlit Web App]
-        I1[Load Model v5 & Latest Feature Snapshot]
-        I2[Autoregressive 3-Day ML Forecast (+24h, +48h, +72h)]
-        I3[Calculate EPA AQI & Health Advisories]
-        I4[Interactive Dashboard: Gauges, Regional Map, Trends]
+    subgraph UI["Inference & UI (Streamlit Web App)"]
+        I1["Load Model v5 & Latest Feature Snapshot"]
+        I2["Autoregressive 3-Day ML Forecast (+24h, +48h, +72h)"]
+        I3["Calculate EPA AQI & Health Advisories"]
+        I4["Interactive Dashboard: Gauges, Regional Map, Trends"]
     end
 
     API --> F1 --> F2 --> F3 --> FS
@@ -130,19 +124,28 @@ From the OpenWeather Air Pollution API, 8 distinct atmospheric chemical compound
 The exploratory data analysis (`eda.py`) revealed several key domain insights that directly informed our feature engineering and modeling strategies:
 
 ### 1. AQI Distribution & City Breakdown
-![AQI Distribution](images/eda_aqi_distribution.png)
+<p align="center">
+  <img src="images/eda_aqi_distribution.png" width="600" alt="AQI Distribution"/>
+</p>
+
 - **Karachi & Hyderabad** exhibit the widest variance, with frequent excursions into the *Unhealthy* and *Very Unhealthy* EPA categories ($AQI > 150$).
 - **Sukkur & Jamshoro** show persistent moderate baselines with acute spikes during night-time temperature inversions.
 
 ### 2. Temporal & Diurnal Patterns
-![AQI Over Time](images/eda_aqi_over_time.png)
-![AQI by Day](images/eda_aqi_by_day.png)
+<p align="center">
+  <img src="images/eda_aqi_over_time.png" width="48%" alt="AQI Over Time"/>
+  <img src="images/eda_aqi_by_day.png" width="48%" alt="AQI by Day"/>
+</p>
+
 - **Morning Rush-Hour Peak (07:00 – 10:00 PKT):** Significant surge in $NO_2$, $CO$, and $PM_{2.5}$ due to morning traffic and factory startups.
 - **Afternoon Solar Dip (12:00 – 16:00 PKT):** Increased boundary layer height and thermal convection disperse surface particulates, while Ozone ($O_3$) peaks due to photochemical reactions.
 - **Evening Accumulation (19:00 – 23:00 PKT):** Stagnant air, domestic cooking emissions, and cooling boundary layer trap particulates near ground level.
 
 ### 3. Pollutant Collinearity Heatmap
-![Correlation Heatmap](images/eda_correlation_heatmap.png)
+<p align="center">
+  <img src="images/eda_correlation_heatmap.png" width="550" alt="Correlation Heatmap"/>
+</p>
+
 - Extremely strong linear correlation ($r > 0.85$) between $PM_{2.5}$ and $PM_{10}$.
 - Strong positive correlation between $CO$ and $NO_2$, verifying vehicular and fuel combustion as shared emission sources.
 
@@ -212,9 +215,11 @@ We evaluated multiple candidate algorithms using **temporal train/test splitting
 
 ## 🔍 Model Explainability with SHAP
 
-To ensure model transparency and eliminate "black box" decisions, we integrated **SHAP (SHapley Additive exPlanations)** into the automated training pipeline (`images/shap_summary.png`):
+To ensure model transparency and eliminate "black box" decisions, we integrated **SHAP (SHapley Additive exPlanations)** into the automated training pipeline:
 
-![SHAP Summary](images/shap_summary.png)
+<p align="center">
+  <img src="images/shap_summary.png" width="600" alt="SHAP Summary Plot"/>
+</p>
 
 ### Key SHAP Findings:
 1. **`pm2_5_lag_1h` & `pm2_5_roll_mean_24h`:** The single most influential predictors. A high 24-hour moving average exerts the strongest upward force on forecasted values.
@@ -359,21 +364,4 @@ AQI-Predictor/
 
 ---
 
-## 📜 License & Citation
-
-This project is licensed under the **MIT License**.
-
-If you use this project or methodology in your research or application, please cite:
-```bibtex
-@misc{sindh_aqi_predictor_2026,
-  author = {Kabeer Shaikh},
-  title = {Sindh Air Quality Index: 72-Hour Serverless Machine Learning Forecast System},
-  year = {2026},
-  publisher = {GitHub},
-  journal = {GitHub Repository},
-  howpublished = {\url{https://github.com/kabeershaikhh/AQI-Predictor}}
-}
-```
-
----
 *Built with ❤️ for public health awareness and environmental data science in Sindh, Pakistan.*
