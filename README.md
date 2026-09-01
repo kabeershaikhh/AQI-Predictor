@@ -187,8 +187,8 @@ $$\text{RoC}_{24}(P)_t = \frac{P_t - P_{t-24}}{|P_{t-24}| + \epsilon}$$
 
 #### 4. Cyclical Trigonometric Time Encodings
 Standard integer hours ($0-23$) create an artificial discontinuity between 23:00 and 00:00. We mapped time to continuous cyclical coordinates:
-$$\text{hour\_sin} = \sin\left(\frac{2\pi \cdot \text{hour}}{24}\right), \quad \text{hour\_cos} = \cos\left(\frac{2\pi \cdot \text{hour}}{24}\right)$$
-$$\text{month\_sin} = \sin\left(\frac{2\pi \cdot \text{month}}{12}\right), \quad \text{month\_cos} = \cos\left(\frac{2\pi \cdot \text{month}}{12}\right)$$
+$$\text{hour}_{\sin} = \sin\left(\frac{2\pi \cdot \text{hour}}{24}\right), \quad \text{hour}_{\cos} = \cos\left(\frac{2\pi \cdot \text{hour}}{24}\right)$$
+$$\text{month}_{\sin} = \sin\left(\frac{2\pi \cdot \text{month}}{12}\right), \quad \text{month}_{\cos} = \cos\left(\frac{2\pi \cdot \text{month}}{12}\right)$$
 
 #### 5. Non-Linear EPA AQI Piecewise Mapping (`utils.py`)
 Rather than forcing models to learn non-linear piecewise breakpoints directly, the model predicts continuous physical $PM_{2.5}$ concentration ($\mu\text{g/m}^3$), which is then mapped into the official US EPA AQI index using the standard regulatory formula:
