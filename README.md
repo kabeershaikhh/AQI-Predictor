@@ -1,11 +1,6 @@
-# 🌬️ Sindh Air Quality Prediction System (72-Hour ML Forecast)
+#  Sindh Air Quality Prediction System (72-Hour ML Forecast)
 > **An End-to-End Serverless Machine Learning System for Multi-City Air Quality Forecasting in Sindh, Pakistan.**
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.42+-FF4B4B.svg)](https://streamlit.io/)
-[![Hopsworks Feature Store](https://img.shields.io/badge/Hopsworks-Feature%20Store%20%26%20Model%20Registry-00A699.svg)](https://www.hopsworks.ai/)
-[![GitHub Actions CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF.svg)](https://github.com/features/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
@@ -26,7 +21,7 @@
 
 ---
 
-## 🌟 Executive Summary
+##  Executive Summary
 
 Air pollution is one of the most critical public health challenges across the Sindh province in Pakistan. Rapid urbanization, industrial emissions, vehicular traffic, and seasonal meteorological shifts lead to severe spikes in particulate matter ($PM_{2.5}$ and $PM_{10}$), often reaching hazardous levels.
 
@@ -37,7 +32,7 @@ This project delivers an **end-to-end, automated, serverless Machine Learning sy
 - **Nawabshah** (Central agricultural & regional transit basin)
 - **Sukkur** (Northern Sindh economic gateway on the Indus River)
 
-### 🏆 Key Project Achievements:
+###  Key Project Achievements:
 - **Feature Store & Model Registry:** Serverless data infrastructure using **Hopsworks Cloud**.
 - **Automated Hourly Ingestion:** GitHub Actions cron pipeline ingesting live atmospheric pollutants from the **OpenWeather Air Pollution API**.
 - **Automated Daily Retraining:** CI/CD pipeline performing automated retraining, feature importance calculation, model evaluation, and versioning.
@@ -46,7 +41,7 @@ This project delivers an **end-to-end, automated, serverless Machine Learning sy
 
 ---
 
-## 🏙️ Urban & Environmental Context (Sindh, Pakistan)
+##  Urban & Environmental Context (Sindh, Pakistan)
 
 | City | Latitude | Longitude | Primary Pollution Drivers |
 |---|---|---|---|
@@ -58,7 +53,7 @@ This project delivers an **end-to-end, automated, serverless Machine Learning sy
 
 ---
 
-## 🏗️ End-to-End System Architecture
+##  System Architecture
 
 The system follows the modern **FTI (Feature-Training-Inference)** serverless MLOps pattern:
 
@@ -105,7 +100,7 @@ flowchart TD
 
 ---
 
-## 📡 Data Pipeline & Historical Backfill
+##  Data Pipeline & Historical Backfill
 
 ### 1. Ingested Pollutants
 From the OpenWeather Air Pollution API, 8 distinct atmospheric chemical compounds and particulates are ingested:
@@ -125,7 +120,7 @@ From the OpenWeather Air Pollution API, 8 distinct atmospheric chemical compound
 
 ---
 
-## 📊 Exploratory Data Analysis (EDA) Insights
+##  Exploratory Data Analysis (EDA) Insights
 
 The exploratory data analysis (`eda.py`) revealed several key domain insights that directly informed our feature engineering and modeling strategies:
 
@@ -148,12 +143,12 @@ The exploratory data analysis (`eda.py`) revealed several key domain insights th
 
 ---
 
-## ⚙️ Feature Engineering & How Model Accuracy Was Boosted
+##  Feature Engineering & How Model Accuracy Was Boosted
 
-### ❌ The Initial Challenge: Low Baseline Performance
+###  The Initial Challenge: Low Baseline Performance
 Initial naive models trained on raw pollutant values without temporal dynamics achieved poor predictive power ($R^2 < 0.40$). Air pollution is inherently a **dynamic, autocorrelated time-series phenomenon** governed by atmospheric accumulation, wind dispersion, and human activity cycles.
 
-### 🚀 Key Engineering Innovations That Boosted $R^2$ to 74.7%:
+###  Key Engineering Innovations That Boosted $R^2$ to 74.7%:
 
 ```
 Raw Data (8 Pollutants + Timestamp)
@@ -192,7 +187,7 @@ $$I = \frac{I_{\text{high}} - I_{\text{low}}}{C_{\text{high}} - C_{\text{low}}} 
 
 ---
 
-## 🤖 Model Benchmarking & Selection
+##  Model Benchmarking & Selection
 
 We evaluated multiple candidate algorithms using **temporal train/test splitting** (training on historical data, testing strictly on out-of-time future data to prevent data leakage):
 
@@ -210,7 +205,7 @@ We evaluated multiple candidate algorithms using **temporal train/test splitting
 
 ---
 
-## 🔍 Model Explainability with SHAP
+##  Model Explainability with SHAP
 
 To ensure model transparency and eliminate "black box" decisions, we integrated **SHAP (SHapley Additive exPlanations)** into the automated training pipeline (`images/shap_summary.png`):
 
@@ -224,7 +219,7 @@ To ensure model transparency and eliminate "black box" decisions, we integrated 
 
 ---
 
-## 🔄 Automated Production Pipelines (CI/CD)
+##  Automated Production Pipelines (CI/CD)
 
 The entire ML lifecycle is fully automated using **GitHub Actions CI/CD workflows**:
 
@@ -246,7 +241,7 @@ The entire ML lifecycle is fully automated using **GitHub Actions CI/CD workflow
 
 ---
 
-## 💻 Interactive 3-Day Forecast Dashboard (Streamlit)
+##  Interactive 3-Day Forecast Dashboard (Streamlit)
 
 The user-facing dashboard (`app.py`) was engineered for **maximum readability, zero-scroll UX, and complete citizen accessibility**:
 
@@ -260,7 +255,7 @@ The user-facing dashboard (`app.py`) was engineered for **maximum readability, z
 
 ---
 
-## 🛠️ Challenges Encountered & Engineering Solutions
+##  Challenges Encountered & Engineering Solutions
 
 | Challenge Encountered | Technical Root Cause | Engineering Solution Implemented |
 |---|---|---|
@@ -273,7 +268,7 @@ The user-facing dashboard (`app.py`) was engineered for **maximum readability, z
 
 ---
 
-## 🚀 How to Run & Reproduce Locally
+##  How to Run & Reproduce Locally
 
 ### 1. Clone the Repository
 ```bash
@@ -319,7 +314,7 @@ Open `http://localhost:8501` in your browser.
 
 ---
 
-## 📁 Project Directory Structure
+##  Project Directory Structure
 
 ```
 AQI-Predictor/
@@ -359,21 +354,4 @@ AQI-Predictor/
 
 ---
 
-## 📜 License & Citation
-
-This project is licensed under the **MIT License**.
-
-If you use this project or methodology in your research or application, please cite:
-```bibtex
-@misc{sindh_aqi_predictor_2026,
-  author = {Kabeer Shaikh},
-  title = {Sindh Air Quality Index: 72-Hour Serverless Machine Learning Forecast System},
-  year = {2026},
-  publisher = {GitHub},
-  journal = {GitHub Repository},
-  howpublished = {\url{https://github.com/kabeershaikhh/AQI-Predictor}}
-}
-```
-
----
 *Built with ❤️ for public health awareness and environmental data science in Sindh, Pakistan.*
