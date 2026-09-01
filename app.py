@@ -44,11 +44,11 @@ st.set_page_config(
 # CONSTANTS & PALETTES
 # ─────────────────────────────────────────────
 CITIES = {
-    "Karachi":   {"lat": 24.8607, "lon": 67.0011, "emoji": "🏙️"},
-    "Hyderabad": {"lat": 25.3960, "lon": 68.3578, "emoji": "🌇"},
-    "Jamshoro":  {"lat": 25.4300, "lon": 68.2800, "emoji": "🏛️"},
-    "Nawabshah": {"lat": 26.2442, "lon": 68.4100, "emoji": "🌾"},
-    "Sukkur":    {"lat": 27.7052, "lon": 68.8574, "emoji": "🌅"},
+    "Karachi":   {"lat": 24.8607, "lon": 67.0011, "emoji": "📍"},
+    "Hyderabad": {"lat": 25.3960, "lon": 68.3578, "emoji": "📍"},
+    "Jamshoro":  {"lat": 25.4300, "lon": 68.2800, "emoji": "📍"},
+    "Nawabshah": {"lat": 26.2442, "lon": 68.4100, "emoji": "📍"},
+    "Sukkur":    {"lat": 27.7052, "lon": 68.8574, "emoji": "📍"},
 }
 
 POLLUTANTS = ['pm2_5', 'pm10', 'co', 'no2', 'o3', 'so2', 'nh3', 'no']
