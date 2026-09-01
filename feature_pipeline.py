@@ -31,9 +31,9 @@ CITIES = [
 ]
 
 
-# ─────────────────────────────────────────────
-# STEP 1: FETCH DATA FROM OPENWEATHER API
-# ─────────────────────────────────────────────
+# 
+# STEP 1: fetch fron openweather
+# 
 def fetch_air_pollution(city):
     """
     Calls the OpenWeather Air Pollution API for a single city.
@@ -69,9 +69,9 @@ def fetch_air_pollution(city):
     }
 
 
-# ─────────────────────────────────────────────
-# STEP 2: FEATURE ENGINEERING
-# ─────────────────────────────────────────────
+# 
+# STEP 2: Feature engineering:
+# 
 def engineer_features(raw_data_list):
     """
     Takes a list of raw data dictionaries and returns a pandas DataFrame
@@ -79,7 +79,7 @@ def engineer_features(raw_data_list):
     """
     df = pd.DataFrame(raw_data_list)
     
-    # Calculate EPA AQI (0-500 scale) from raw pollutant concentrations
+    # Calculate epa AQI (0-500 scale) from raw pollutant concentrations
     epa_results = df.apply(
         lambda row: calculate_epa_aqi(
             pm2_5=row['pm2_5'], pm10=row['pm10'], co=row['co'],
@@ -102,9 +102,9 @@ def engineer_features(raw_data_list):
     return df
 
 
-# ─────────────────────────────────────────────
-# STEP 3A: SAVE TO LOCAL PARQUET (BACKUP)
-# ─────────────────────────────────────────────
+# 
+# STEP 3A:Save local parquet backup
+# 
 def save_to_local(df):
     """Saves the DataFrame to a local Parquet file (append mode)."""
     filepath = os.path.join(FEATURE_STORE_DIR, "aqi_features.parquet")
@@ -120,8 +120,8 @@ def save_to_local(df):
         print(f"  ✓ Local backup created with {len(df)} rows.")
 
 
-# ─────────────────────────────────────────────
-# STEP 3B: UPLOAD TO HOPSWORKS FEATURE STORE
+# 
+# STEP 3B: upload to Hopsworks Feature Store & Datasets
 def upload_to_hopsworks(df):
     """
     Uploads engineered features directly to Hopsworks Cloud using Hopsworks REST Dataset API.
@@ -151,9 +151,7 @@ def upload_to_hopsworks(df):
     print("  ✓ Features successfully uploaded to Hopsworks Cloud via REST API!")
 
 
-# ─────────────────────────────────────────────
-# MAIN: RUN THE PIPELINE
-# ─────────────────────────────────────────────
+# run the pipeline
 if __name__ == "__main__":
     print("=" * 60)
     print("  AQI FEATURE PIPELINE")

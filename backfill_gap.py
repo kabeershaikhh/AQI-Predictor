@@ -1,15 +1,4 @@
-"""
-BACKFILL GAP SCRIPT - Fill Aug 10-26 data gap
-===============================================
-One-time script to:
-  1. Fetch hourly AQI data from Aug 10 → now (filling the gap)
-  2. Append to existing aqi_historical.parquet
-  3. Upload the COMPLETE dataset to Hopsworks Feature Store
-     (replaces old manually-uploaded data with clean, code-uploaded features)
 
-Usage:
-  python backfill_gap.py
-"""
 
 import os
 import time
@@ -38,8 +27,7 @@ CITIES = [
     {"name": "Sukkur", "lat": 27.7139, "lon": 68.8369}
 ]
 
-# Gap range: from where backfill ended to now
-# The existing data ends at 2026-08-10 19:00:00 UTC
+
 GAP_START = datetime(2026, 8, 10, 19, 0, 0)
 GAP_END = datetime.utcnow()
 
@@ -102,7 +90,7 @@ def engineer_features(df):
     df['month'] = df['timestamp'].dt.month
     df['day_of_week'] = df['timestamp'].dt.dayofweek
 
-    # Convert to Unix milliseconds (matches feature_pipeline.py format)
+    # Convert to Unix milliseconds 
     df['timestamp'] = df['timestamp'].astype('int64') // 10**6
 
     return df
@@ -163,7 +151,7 @@ if __name__ == "__main__":
     gap_hours = int((GAP_END - GAP_START).total_seconds() / 3600)
     print(f"  Expected new rows: ~{gap_hours * len(CITIES)} ({gap_hours}h × {len(CITIES)} cities)")
 
-    # ── Step 1: Fetch gap data ──
+    #  Step 1: Fetch gap data 
     all_data = []
     for i, city in enumerate(CITIES):
         print(f"\n[{i+1}/{len(CITIES)}] Fetching gap data for {city['name']}...")
@@ -190,12 +178,12 @@ if __name__ == "__main__":
         print("\n✗ No gap data fetched! Check your API key.")
         exit(1)
 
-    # ── Step 2: Engineer features for gap data ──
+    #  Step 2: Engineer features for gap data 
     print(f"\n[Processing] Engineering features for {len(all_data)} new rows...")
     gap_df = pd.DataFrame(all_data)
     gap_df = engineer_features(gap_df)
 
-    # ── Step 3: Merge with existing historical data ──
+    #  Step 3: Merge with existing historical data 
     filepath = os.path.join(FEATURE_STORE_DIR, "aqi_historical.parquet")
     print(f"\n[Merging] Loading existing data from {filepath}...")
     existing_df = pd.read_parquet(filepath)
@@ -206,7 +194,7 @@ if __name__ == "__main__":
     combined_df = combined_df.sort_values(by=["city", "timestamp"]).reset_index(drop=True)
     print(f"  Combined rows: {len(combined_df)} (after dedup)")
 
-    # ── Step 4: Save updated parquet ──
+    #  Step 4: Save updated parquet 
     combined_df.to_parquet(filepath, index=False)
     file_size_mb = os.path.getsize(filepath) / (1024 * 1024)
     print(f"\n  ✓ Updated parquet saved: {filepath}")
@@ -217,7 +205,7 @@ if __name__ == "__main__":
     ts_max = pd.to_datetime(combined_df['timestamp'].max(), unit='ms')
     print(f"  ✓ Date range: {ts_min} → {ts_max}")
 
-    # ── Step 5: Upload complete dataset to Hopsworks ──
+    #  Step 5: Upload complete dataset to Hopsworks 
     print("\n[Uploading] Uploading complete dataset to Hopsworks...")
     try:
         upload_to_hopsworks(combined_df)

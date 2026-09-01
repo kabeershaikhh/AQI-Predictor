@@ -28,9 +28,9 @@ warnings.filterwarnings('ignore')
 load_dotenv()
 HOPSWORKS_API_KEY = os.getenv("HOPSWORKS_API_KEY")
 
-# ─────────────────────────────────────────────
+# ─
 # POLLUTANTS TO CREATE LAGGED FEATURES FOR
-# ─────────────────────────────────────────────
+# ─
 POLLUTANTS = ['pm2_5', 'pm10', 'co', 'no2', 'o3', 'so2', 'nh3', 'no']
 
 
@@ -50,16 +50,16 @@ def create_features_and_target(df):
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
     df = df.sort_values(by=['city', 'timestamp']).copy()
     
-    # ── TARGET: raw PM2.5 concentration 24 hours from now ──
+    #  Target: raw PM2.5 concentration 24 hours from now 
     df['target_pm25'] = df.groupby('city')['pm2_5'].shift(-24)
     
-    # ── LAGGED FEATURES for every pollutant ──
+    #  Lagged features for every pollutant 
     lag_hours = [1, 6, 12, 24]
     for pol in POLLUTANTS:
         for lag in lag_hours:
             df[f'{pol}_lag_{lag}h'] = df.groupby('city')[pol].shift(lag)
     
-    # ── ROLLING STATISTICS (24h window) for key pollutants ──
+    #  ROlling features (24h window) for key pollutants 
     rolling_pollutants = ['pm2_5', 'pm10', 'co', 'o3']
     for pol in rolling_pollutants:
         grouped = df.groupby('city')[pol]
@@ -71,20 +71,20 @@ def create_features_and_target(df):
             lambda x: x.shift(1).rolling(window=24, min_periods=1).std()
         )
     
-    # ── RATE OF CHANGE (current value vs 24h ago) ──
+    #  Rate of features (current value vs 24h ago) 
     for pol in rolling_pollutants:
         lag_col = f'{pol}_lag_24h'
         # Avoid division by zero
         df[f'{pol}_roc_24h'] = (df[pol] - df[lag_col]) / (df[lag_col].abs() + 1e-6)
     
-    # ── CYCLICAL TIME ENCODING ──
+    #  Cyclic tme encoding 
     # Encode hour and month as sin/cos so the model knows 23:00 is close to 00:00
     df['hour_sin'] = np.sin(2 * np.pi * df['hour'] / 24)
     df['hour_cos'] = np.cos(2 * np.pi * df['hour'] / 24)
     df['month_sin'] = np.sin(2 * np.pi * df['month'] / 12)
     df['month_cos'] = np.cos(2 * np.pi * df['month'] / 12)
     
-    # ── DROP INCOMPLETE ROWS ──
+    #  drop incomplete rows 
     # Need at least 24h of past data for lag features, and 24h of future for target
     required_cols = ['target_pm25'] + [f'{pol}_lag_24h' for pol in POLLUTANTS]
     df = df.dropna(subset=required_cols).copy()
@@ -292,7 +292,7 @@ def main():
 
     # 4. Model Evaluation
     print("\n[Step 4/6] Evaluating Models...")
-    print("\n  ── PM2.5 Prediction Accuracy (Primary Metric) ──")
+    print("\n   PM2.5 Prediction Accuracy (Primary Metric) ")
     best_model_name = None
     best_rmse = float('inf')
     best_r2 = -float('inf')
@@ -321,7 +321,7 @@ def main():
     best_model = models[best_model_name]
     
     # Also show the EPA AQI equivalent accuracy for the best model
-    print("\n  ── EPA AQI Equivalent (for reference) ──")
+    print("\n   EPA AQI Equivalent (for reference) ")
     best_preds = all_preds[best_model_name]
     pred_aqi = np.array([pm25_to_epa_aqi(p) for p in best_preds])
     true_aqi = np.array([pm25_to_epa_aqi(t) for t in y_test.values])

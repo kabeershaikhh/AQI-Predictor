@@ -1,31 +1,5 @@
-"""
-EPA AQI CALCULATOR
-==================
-Calculates the US EPA Air Quality Index (0-500 scale) from raw pollutant
-concentrations returned by the OpenWeather API.
-
-How EPA AQI works:
-  1. Each pollutant (PM2.5, PM10, CO, NO2, O3, SO2) has its own "breakpoint"
-     table that maps concentration ranges to AQI ranges.
-  2. For each pollutant, we calculate a sub-AQI using linear interpolation.
-  3. The OVERALL AQI = the MAXIMUM sub-AQI across all pollutants.
-  4. The pollutant with the highest sub-AQI is called the "dominant pollutant".
-
-Note: EPA AQI officially uses averaged concentrations (24hr for PM, 8hr for CO/O3,
-1hr for NO2/SO2). Since we have hourly instantaneous readings, we use them directly.
-This is common practice in real-time AQI dashboards.
-
-Reference: https://www.airnow.gov/aqi/aqi-basics/
-"""
 
 
-# ─────────────────────────────────────────────
-# UNIT CONVERSIONS (OpenWeather gives μg/m³)
-# ─────────────────────────────────────────────
-# EPA breakpoints use different units for each pollutant.
-# Conversion at standard conditions (25°C, 1 atm):
-#   ppb = (μg/m³) × 24.45 / molecular_weight
-#   ppm = ppb / 1000
 
 def ug_to_ppm_co(ug):
     """Convert CO from μg/m³ to ppm (molecular weight: 28.01)"""
@@ -44,9 +18,9 @@ def ug_to_ppb_so2(ug):
     return (ug * 24.45) / 64.07
 
 
-# ─────────────────────────────────────────────
-# EPA AQI BREAKPOINT TABLES
-# ─────────────────────────────────────────────
+
+# EPA AQI braekpoints
+
 # Format: (AQI_low, AQI_high, Concentration_low, Concentration_high)
 
 # PM2.5 breakpoints (μg/m³) — no conversion needed
@@ -114,9 +88,9 @@ SO2_BREAKPOINTS = [
 ]
 
 
-# ─────────────────────────────────────────────
-# AQI CALCULATION
-# ─────────────────────────────────────────────
+
+# AQI calculation functions
+
 def calc_sub_aqi(concentration, breakpoints):
     """
     Calculate the sub-AQI for a single pollutant using EPA linear interpolation.
@@ -190,9 +164,9 @@ def get_aqi_category(aqi):
         return "Hazardous", "maroon"
 
 
-# ─────────────────────────────────────────────
-# QUICK TEST
-# ─────────────────────────────────────────────
+
+# Quick test
+
 if __name__ == "__main__":
     # Test with sample data from Karachi (from our earlier runs)
     test_cases = [

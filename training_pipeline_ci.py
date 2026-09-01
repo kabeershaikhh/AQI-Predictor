@@ -1,17 +1,4 @@
-"""
-CI/CD TRAINING PIPELINE — RandomForest Only
-=============================================
-Lean training pipeline designed for daily automated runs via GitHub Actions.
 
-- Trains ONLY RandomForest (the proven best model from initial 4-model comparison)
-- Evaluates on held-out test data (chronological split)
-- Uploads to Hopsworks Model Registry if performance improves
-- Generates SHAP feature importance plot
-- Saves model artifacts as GitHub Actions artifacts
-
-The original training_pipeline.py (4-model comparison) is preserved for
-future experimentation and model selection.
-"""
 
 import os
 import sys

@@ -1,16 +1,3 @@
-"""
-BACKFILL SCRIPT - Historical AQI Data
-======================================
-Fetches historical air pollution data from OpenWeather API
-for the past 1 year and saves it locally as a Parquet file.
-
-OpenWeather provides hourly historical data from Nov 27, 2020 onwards.
-We fetch 1 year of data (~8,760 hours per city × 5 cities = ~43,800 rows).
-
-Usage:
-  1. Run locally in WSL:    python3 backfill.py
-  2. Then upload to Hopsworks using the instructions printed at the end.
-"""
 
 import os
 import time
@@ -37,9 +24,8 @@ CITIES = [
     {"name": "Sukkur", "lat": 27.7139, "lon": 68.8369}
 ]
 
-# ─────────────────────────────────────────────
 # HOW LONG TO BACKFILL
-# ─────────────────────────────────────────────
+
 # Fetch the last 1 year of data (enough for seasonal patterns)
 END_DATE = datetime.now()
 START_DATE = END_DATE - timedelta(days=365)
@@ -158,7 +144,7 @@ if __name__ == "__main__":
     print(f"  Estimated API calls: {len(CITIES) * ((END_DATE - START_DATE).days // CHUNK_DAYS + 1)}")
     print(f"  Estimated time: ~{len(CITIES) * ((END_DATE - START_DATE).days // CHUNK_DAYS + 1)} seconds\n")
     
-    # ── Fetch historical data for all cities ──
+    #  Fetch historical data for all cities 
     all_data = []
     
     for i, city in enumerate(CITIES):
@@ -171,7 +157,7 @@ if __name__ == "__main__":
         print("\n✗ No data fetched! Check your API key.")
         exit(1)
     
-    # ── Create DataFrame and engineer features ──
+    #  Create DataFrame and engineer features 
     print(f"\n[Processing] Creating DataFrame with {len(all_data)} rows...")
     df = pd.DataFrame(all_data)
     df = engineer_features(df)
@@ -180,7 +166,7 @@ if __name__ == "__main__":
     df = df.drop_duplicates(subset=["city", "timestamp"], keep="last")
     print(f"  After deduplication: {len(df)} rows")
     
-    # ── Show summary statistics ──
+    #  Show summary statistics 
     print(f"\n{'─' * 60}")
     print("  DATA SUMMARY")
     print(f"{'─' * 60}")
@@ -197,14 +183,14 @@ if __name__ == "__main__":
               f"Avg EPA AQI: {city_df['epa_aqi'].mean():.0f} | "
               f"Avg PM2.5: {city_df['pm2_5'].mean():.1f}")
     
-    # ── Save to local Parquet file ──
+    #  Save to local Parquet file 
     filepath = os.path.join(FEATURE_STORE_DIR, "aqi_historical.parquet")
     df.to_parquet(filepath, index=False)
     file_size_mb = os.path.getsize(filepath) / (1024 * 1024)
     print(f"\n  ✓ Saved to: {filepath}")
     print(f"  ✓ File size: {file_size_mb:.1f} MB")
     
-    # ── Print next steps ──
+    #  Print next steps 
     print(f"\n{'=' * 60}")
     print("  BACKFILL COMPLETE!")
     print(f"{'=' * 60}")

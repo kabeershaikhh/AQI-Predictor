@@ -1,17 +1,4 @@
-"""
-Sindh Air Quality Index — 3-Day Forecast Dashboard
-===================================================
-Ultra-compact, above-the-fold 72-hour AQI forecasting dashboard
-for 5 cities in Sindh, Pakistan.
 
-Features:
-  - Header & City Selector on the same compact top row (0 scrolling required!)
-  - Primary 3-Day Average Gauge & Daily Breakdown visible immediately on load
-  - Clean, citizen-friendly Dark Mode UI
-  - Interactive Regional Cartography & Model Telemetry in tabs
-
-Run with: streamlit run app.py
-"""
 
 import os
 import sys
@@ -30,9 +17,7 @@ from utils import calculate_epa_aqi, get_aqi_category
 warnings.filterwarnings('ignore')
 load_dotenv()
 
-# ─────────────────────────────────────────────
-# PAGE CONFIG
-# ─────────────────────────────────────────────
+# page condiguration
 st.set_page_config(
     page_title="Sindh AQI — 3-Day Forecast",
     page_icon="🌍",
@@ -40,9 +25,8 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ─────────────────────────────────────────────
-# CONSTANTS & PALETTES
-# ─────────────────────────────────────────────
+
+#constant
 CITIES = {
     "Karachi":   {"lat": 24.8607, "lon": 67.0011, "emoji": "📍"},
     "Hyderabad": {"lat": 25.3960, "lon": 68.3578, "emoji": "📍"},
@@ -74,9 +58,7 @@ AQI_HEALTH_MESSAGES = {
     "Hazardous": "Emergency warning: Dangerous pollution levels. Remain indoors. 🆘",
 }
 
-# ─────────────────────────────────────────────
-# COMPACT CSS (Fits on screen without scrolling)
-# ─────────────────────────────────────────────
+# compact css
 st.markdown("""
 <style>
     /* Clean layout */
@@ -280,9 +262,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ─────────────────────────────────────────────
-# DATA & MODEL LOADING
-# ─────────────────────────────────────────────
+#model loading
 @st.cache_resource(show_spinner="Loading air quality model...")
 def load_model():
     """Load the trained RandomForest model and feature names."""
@@ -350,9 +330,9 @@ def load_data():
     return df
 
 
-# ─────────────────────────────────────────────
-# FEATURE ENGINEERING & 3-DAY FORECASTING
-# ─────────────────────────────────────────────
+
+# feature engineering
+
 def engineer_features(df):
     """Engineer features for inference."""
     df = df.copy()
@@ -462,9 +442,9 @@ def predict_3_days_for_city(model, feature_names, df_engineered, city_name):
     return forecasts
 
 
-# ─────────────────────────────────────────────
+
 # UI & PLOTLY HELPER FUNCTIONS
-# ─────────────────────────────────────────────
+
 def render_hero_gauge(value, category_text, theme_cfg):
     """Render a compact dark semicircular AQI gauge."""
     fig = go.Figure(go.Indicator(
@@ -605,11 +585,11 @@ def render_city_forecast_map(city_forecasts_dict):
     return fig
 
 
-# ─────────────────────────────────────────────
-# MAIN APPLICATION
-# ─────────────────────────────────────────────
+
+# Main application logic
+
 def main():
-    # ── Load Data & Model ──
+    #  Load Data & Model 
     model, feature_names, model_version = load_model()
     raw_df = load_data()
 
@@ -621,10 +601,10 @@ def main():
         st.error("❌ Prediction model is loading or not found. Please verify Hopsworks Model Registry.")
         st.stop()
 
-    # ── Engineer features for inference ──
+    #  Engineer features for inference 
     df_eng = engineer_features(raw_df)
 
-    # ── Top Row: Header on Left + City Selector on Right (Unified Row) ──
+    #  Top Row: Header on Left + City Selector on Right (Unified Row) 
     col_hdr_left, col_hdr_right = st.columns([1.1, 1.4], vertical_alignment="center")
 
     with col_hdr_left:
@@ -647,7 +627,7 @@ def main():
         if not selected_city:
             selected_city = "Karachi"
 
-    # ── Compute 3-Day Predictions for All Cities ──
+    #  Compute 3-Day Predictions for All Cities 
     all_city_forecasts = {}
     for city_name in city_options:
         fc = predict_3_days_for_city(model, feature_names, df_eng, city_name)
@@ -677,7 +657,7 @@ def main():
         trend_label = "➡️ Stable (±3 AQI)"
         trend_color = "#38bdf8"
 
-    # ── Main Section: Single 3-Day Average Gauge + Daily Breakdown Cards ──
+    #  Main Section: Single 3-Day Average Gauge + Daily Breakdown Cards 
     col_left, col_right = st.columns([1.1, 1.3])
 
     with col_left:
@@ -734,7 +714,7 @@ def main():
             
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── 3-Day Health Advisory Banner ──
+    #  3-Day Health Advisory Banner 
     highest_risk_day = max(selected_forecasts, key=lambda x: x['epa_aqi'])
     risk_t = highest_risk_day['theme']
     risk_cat = highest_risk_day['category']
@@ -751,7 +731,7 @@ def main():
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Tabs: Clean & Non-Technical ──
+    #  Tabs: Clean & Non-Technical 
     tab1, tab2, tab3, tab4 = st.tabs([
         "📈 Forecast Trends", "🗺️ Regional Map", "🏙️ City Comparison", "ℹ️ About the Model"
     ])
@@ -862,7 +842,7 @@ def main():
             else:
                 st.info("Feature importance plot is available after daily training pipeline runs.")
 
-    # ── Clean Citizen-Friendly Footer ──
+    #  Clean Citizen-Friendly Footer 
     st.markdown("---")
     st.markdown("""
     <div style="text-align: center; color: #94a3b8; font-size: 0.82rem; padding: 0.6rem;">
