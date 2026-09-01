@@ -13,3 +13,5 @@ tensorflow
 joblib
 shap
 numpy
+streamlit
+plotly
