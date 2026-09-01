@@ -1,15 +1,16 @@
 """
 🌬️ Sindh Air Quality Index — 3-Day ML Forecast Dashboard
 ===========================================================
-Ultra-modern 72-hour AQI forecasting dashboard for 5 cities in Sindh, Pakistan.
+Ultra-futuristic 72-hour AQI telemetry & ML forecasting dashboard
+for 5 cities in Sindh, Pakistan.
 
 Features:
-  - Light Mode (Default) & Dark / Night Mode Toggle
-  - Single 3-Day Average Hero Gauge + Daily Forecast Breakdown (Day 1, 2, 3)
+  - Futuristic Cyber-HUD & Quantum Holographic Aesthetic
+  - Icon-only (☀️ / 🌙) Ambient Theme Switcher
+  - Single 3-Day Average Holographic Hero Gauge
+  - 3-Day Forward Telemetry Pods (Day 1, Day 2, Day 3)
   - Pure Machine Learning Forecasting (RandomForest Model v5)
-  - Apple Weather / Vercel-inspired UI Design
-  - Interactive Sindh Regional Map & Comparison Matrix
-  - SHAP Feature Importance & Model Interpretability
+  - Interactive Regional Cartography & SHAP Telemetry
 
 Run with: streamlit run app.py
 """
@@ -35,8 +36,8 @@ load_dotenv()
 # PAGE CONFIG
 # ─────────────────────────────────────────────
 st.set_page_config(
-    page_title="Sindh AQI — 3-Day ML Forecast",
-    page_icon="🌬️",
+    page_title="AQI Neural Forecast — Sindh",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -63,148 +64,171 @@ ROLLING_POLLUTANTS = ['pm2_5', 'pm10', 'co', 'o3']
 LAG_HOURS = [1, 6, 12, 24]
 
 AQI_COLORS = {
-    "Good": "#10b981",                          # Emerald
-    "Moderate": "#f59e0b",                      # Amber
-    "Unhealthy for Sensitive Groups": "#f97316", # Orange
-    "Unhealthy": "#ef4444",                     # Red
-    "Very Unhealthy": "#8b5cf6",                # Purple
-    "Hazardous": "#7f1d1d",                     # Maroon
+    "Good": "#00f5a0",                          # Cyber Neon Emerald
+    "Moderate": "#ffd000",                      # Cyber Gold
+    "Unhealthy for Sensitive Groups": "#ff7700", # Neon Amber
+    "Unhealthy": "#ff0055",                     # Cyber Crimson
+    "Very Unhealthy": "#bf00ff",                # Neon Violet
+    "Hazardous": "#700028",                     # Deep Void Maroon
 }
 
 AQI_HEALTH_MESSAGES = {
-    "Good": "Air quality is predicted to be ideal. Perfect for outdoor activities! 🌳",
-    "Moderate": "Air quality is acceptable. Sensitive individuals should take precautions during prolonged outdoor exertion. 😷",
-    "Unhealthy for Sensitive Groups": "Children, elderly, and those with respiratory issues should reduce outdoor exposure. ⚠️",
-    "Unhealthy": "Air quality is unhealthy for everyone. Wear masks and keep windows closed. 🚨",
-    "Very Unhealthy": "Serious health risk! Avoid outdoor exertion and use indoor air purifiers if possible. 🔴",
-    "Hazardous": "EMERGENCY HEALTH HAZARD: Severe pollution forecasted. Stay indoors! 🆘",
+    "Good": "Atmospheric conditions nominal. Ideal for all outdoor operations. 🌳",
+    "Moderate": "Acceptable air composition. Sensitive personnel should monitor prolonged exposure. 😷",
+    "Unhealthy for Sensitive Groups": "Elevated particulate density. Respiratory precautions recommended. ⚠️",
+    "Unhealthy": "Unhealthy atmospheric envelope. Filtration masks advised, restrict outdoor transit. 🚨",
+    "Very Unhealthy": "Hazardous particulate saturation. Limit environmental exposure immediately. 🔴",
+    "Hazardous": "CRITICAL ENVIRONMENTAL ALERT: Extreme toxicity levels. Maintain indoor containment. 🆘",
 }
 
 # ─────────────────────────────────────────────
-# DYNAMIC THEME CSS
+# DYNAMIC FUTURISTIC THEME CSS
 # ─────────────────────────────────────────────
 is_dark = (st.session_state.theme == "dark")
 
 if is_dark:
     theme_css = """
-    /* Dark / Night Theme */
+    /* Cyberpunk Obsidian Void Theme */
     body, .stApp {
-        background-color: #0b1329 !important;
+        background-color: #060913 !important;
+        background-image: 
+            radial-gradient(at 15% 15%, rgba(0, 242, 254, 0.07) 0px, transparent 50%),
+            radial-gradient(at 85% 85%, rgba(191, 0, 255, 0.07) 0px, transparent 50%) !important;
         color: #f1f5f9 !important;
     }
     .hero-header {
-        background: linear-gradient(135deg, #07172b 0%, #0d2744 50%, #153e6b 100%);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+        background: linear-gradient(135deg, rgba(8, 15, 30, 0.9) 0%, rgba(13, 27, 60, 0.9) 100%);
+        border: 1px solid rgba(0, 242, 254, 0.25);
+        box-shadow: 0 0 35px rgba(0, 242, 254, 0.12), inset 0 0 20px rgba(0, 242, 254, 0.05);
     }
     .hero-header h1 {
-        background: linear-gradient(135deg, #ffffff 0%, #b0d5ff 100%);
+        background: linear-gradient(135deg, #ffffff 0%, #00f2fe 50%, #4facfe 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 30px rgba(0, 242, 254, 0.3);
     }
-    .hero-header p {
-        color: #94a3b8;
+    .hero-header p { color: #94a3b8; }
+    .hud-chip {
+        background: rgba(0, 242, 254, 0.1);
+        border: 1px solid rgba(0, 242, 254, 0.3);
+        color: #00f2fe;
     }
     .hero-gauge-card {
-        background: rgba(30, 41, 59, 0.65);
-        border: 1.5px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        background: rgba(10, 16, 32, 0.75);
+        border: 1px solid rgba(0, 242, 254, 0.2);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
     }
     .day-row-card {
-        background: rgba(30, 41, 59, 0.55);
-        border: 1.5px solid rgba(255, 255, 255, 0.08);
+        background: rgba(10, 16, 32, 0.65);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
     .day-row-card:hover {
-        background: rgba(30, 41, 59, 0.85);
-        border-color: rgba(255, 255, 255, 0.18);
+        background: rgba(15, 25, 50, 0.85);
+        border-color: rgba(0, 242, 254, 0.3);
+        box-shadow: 0 0 20px rgba(0, 242, 254, 0.15);
     }
     .day-label { color: #f8fafc; }
     .day-date { color: #94a3b8; }
     .day-pm25 { color: #cbd5e1; }
     .stat-pill {
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        color: #f1f5f9;
-    }
-    .health-alert {
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        background: rgba(0, 242, 254, 0.06);
+        border: 1px solid rgba(0, 242, 254, 0.2);
+        color: #e2e8f0;
     }
     div[data-testid="stPills"] button {
-        background: rgba(30, 41, 59, 0.7) !important;
-        color: #e2e8f0 !important;
-        border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+        background: rgba(10, 16, 32, 0.8) !important;
+        color: #94a3b8 !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
     }
     div[data-testid="stPills"] button:hover {
-        background: rgba(51, 65, 85, 0.9) !important;
+        background: rgba(20, 32, 60, 0.9) !important;
+        color: #00f2fe !important;
+        border-color: rgba(0, 242, 254, 0.4) !important;
     }
     div[data-testid="stPills"] button[aria-selected="true"] {
-        background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%) !important;
+        background: linear-gradient(135deg, #0052d4 0%, #4364f7 50%, #6fb1fc 100%) !important;
         color: white !important;
-        border-color: #06b6d4 !important;
-        box-shadow: 0 6px 20px rgba(6, 182, 212, 0.45) !important;
+        border-color: #6fb1fc !important;
+        box-shadow: 0 0 25px rgba(67, 100, 247, 0.5) !important;
+    }
+    .theme-toggle-btn {
+        background: rgba(10, 16, 32, 0.85);
+        border: 1px solid rgba(0, 242, 254, 0.3);
+        color: #00f2fe;
     }
     .section-header { color: #f8fafc; }
     """
 else:
     theme_css = """
-    /* Light Theme (Clean, Crisp, Apple Weather aesthetic) */
+    /* Quantum Holographic Light Theme */
     body, .stApp {
-        background-color: #f8fafc !important;
+        background-color: #f1f5f9 !important;
+        background-image: 
+            radial-gradient(at 10% 10%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
+            radial-gradient(at 90% 90%, rgba(6, 182, 212, 0.05) 0px, transparent 50%) !important;
         color: #0f172a !important;
     }
     .hero-header {
-        background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0369a1 100%);
         border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.2);
+        box-shadow: 0 12px 35px rgba(2, 132, 199, 0.18);
     }
     .hero-header h1 {
+        background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .hero-header p { color: #bae6fd; }
+    .hud-chip {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
         color: #ffffff;
     }
-    .hero-header p {
-        color: #e0f2fe;
-    }
     .hero-gauge-card {
-        background: #ffffff;
-        border: 1.5px solid #e2e8f0;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(2, 132, 199, 0.18);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.04);
     }
     .day-row-card {
-        background: #ffffff;
-        border: 1.5px solid #e2e8f0;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        background: rgba(255, 255, 255, 0.85);
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
     }
     .day-row-card:hover {
-        background: #f8fafc;
-        border-color: #cbd5e1;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+        background: #ffffff;
+        border-color: #0284c7;
+        box-shadow: 0 8px 25px rgba(2, 132, 199, 0.08);
     }
     .day-label { color: #0f172a; }
     .day-date { color: #64748b; }
     .day-pm25 { color: #475569; }
     .stat-pill {
-        background: #f1f5f9;
+        background: #f8fafc;
         border: 1px solid #e2e8f0;
-        color: #1e293b;
-    }
-    .health-alert {
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
-        border: 1.5px solid #e2e8f0;
+        color: #0f172a;
     }
     div[data-testid="stPills"] button {
         background: #ffffff !important;
-        color: #334155 !important;
-        border: 1.5px solid #cbd5e1 !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+        color: #475569 !important;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
     }
     div[data-testid="stPills"] button:hover {
-        background: #f1f5f9 !important;
-        border-color: #94a3b8 !important;
+        background: #f8fafc !important;
+        border-color: #0284c7 !important;
+        color: #0284c7 !important;
     }
     div[data-testid="stPills"] button[aria-selected="true"] {
-        background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%) !important;
+        background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
-        border-color: #2563eb !important;
-        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35) !important;
+        border-color: #0284c7 !important;
+        box-shadow: 0 6px 20px rgba(2, 132, 199, 0.35) !important;
+    }
+    .theme-toggle-btn {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        color: #0f172a;
     }
     .section-header { color: #0f172a; }
     """
@@ -217,45 +241,94 @@ st.markdown(f"""
     .stDeployButton {{display: none;}}
 
     .main .block-container {{
-        padding-top: 0.5rem;
+        padding-top: 0.6rem;
         padding-bottom: 2rem;
         max-width: 1200px;
     }}
 
-    /* Top bar for Theme Toggle */
-    .top-bar-container {{
+    /* Top HUD status bar with Icon-only Switcher */
+    .top-hud-bar {{
         display: flex;
-        justify-content: flex-end;
+        justify-content: space-between;
         align-items: center;
-        margin-bottom: 0.6rem;
+        margin-bottom: 0.8rem;
+    }}
+    .hud-status-badge {{
+        font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 1.5px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        opacity: 0.85;
+    }}
+    .live-dot {{
+        width: 8px;
+        height: 8px;
+        background: #00f5a0;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #00f5a0;
+        animation: pulse-glow 2s infinite ease-in-out;
+    }}
+    @keyframes pulse-glow {{
+        0%, 100% {{ transform: scale(1); opacity: 1; }}
+        50% {{ transform: scale(1.3); opacity: 0.6; }}
+    }}
+
+    /* Icon-only theme toggle button */
+    div[data-testid="stSegmentedControl"] {{
+        display: inline-flex;
+        border-radius: 30px;
+    }}
+    div[data-testid="stSegmentedControl"] button {{
+        padding: 0.4rem 0.9rem !important;
+        font-size: 1.15rem !important;
+        border-radius: 30px !important;
+        min-width: 44px !important;
     }}
 
     /* Hero Header */
     .hero-header {{
-        padding: 1.8rem 2rem;
-        border-radius: 24px;
-        margin-bottom: 1.3rem;
+        padding: 1.8rem 2.2rem;
+        border-radius: 26px;
+        margin-bottom: 1.4rem;
         text-align: center;
         position: relative;
-        overflow: hidden;
+        backdrop-filter: blur(20px);
     }}
     .hero-header h1 {{
         margin: 0;
-        font-size: 2.3rem;
+        font-size: 2.35rem;
         font-weight: 800;
         letter-spacing: -0.5px;
     }}
     .hero-header p {{
         margin: 0.4rem 0 0 0;
-        font-size: 1.05rem;
+        font-size: 1.02rem;
         font-weight: 400;
+    }}
+    .hud-chips-row {{
+        display: flex;
+        justify-content: center;
+        gap: 0.8rem;
+        margin-top: 0.9rem;
+    }}
+    .hud-chip {{
+        font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 1px;
+        font-weight: 700;
+        padding: 0.25rem 0.8rem;
+        border-radius: 20px;
+        text-transform: uppercase;
     }}
 
     /* City Selector Container */
     .city-selector-container {{
         display: flex;
         justify-content: center;
-        margin-bottom: 1.4rem;
+        margin-bottom: 1.5rem;
     }}
 
     /* Modern Streamlit Pills styling */
@@ -266,7 +339,7 @@ st.markdown(f"""
     }}
     div[data-testid="stPills"] button {{
         font-size: 1.05rem !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         padding: 0.65rem 1.6rem !important;
         border-radius: 35px !important;
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -277,47 +350,50 @@ st.markdown(f"""
 
     /* Hero Average Card */
     .hero-gauge-card {{
-        border-radius: 24px;
-        padding: 1.4rem 1.2rem;
+        border-radius: 26px;
+        padding: 1.5rem 1.4rem;
         text-align: center;
         height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        backdrop-filter: blur(20px);
         transition: all 0.3s ease;
     }}
     .hero-badge {{
+        font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
         display: inline-block;
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         font-weight: 800;
-        letter-spacing: 1.2px;
+        letter-spacing: 1.5px;
         text-transform: uppercase;
-        padding: 0.4rem 1.1rem;
+        padding: 0.4rem 1.2rem;
         border-radius: 25px;
-        margin-bottom: 0.6rem;
+        margin-bottom: 0.5rem;
     }}
 
-    /* Daily Breakdown Cards */
+    /* Daily Breakdown Telemetry Pods */
     .daily-breakdown-container {{
         display: flex;
         flex-direction: column;
-        gap: 0.85rem;
+        gap: 0.9rem;
         height: 100%;
         justify-content: space-between;
     }}
     .day-row-card {{
-        border-radius: 20px;
-        padding: 1.1rem 1.4rem;
+        border-radius: 22px;
+        padding: 1.15rem 1.5rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        transition: all 0.2s ease;
+        backdrop-filter: blur(16px);
+        transition: all 0.25s ease;
     }}
     .day-row-card:hover {{
-        transform: translateX(4px);
+        transform: translateX(5px);
     }}
     .day-label {{
-        font-size: 1.05rem;
+        font-size: 1.08rem;
         font-weight: 800;
         margin-bottom: 0.15rem;
     }}
@@ -328,25 +404,26 @@ st.markdown(f"""
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 0.45rem 1.1rem;
+        padding: 0.45rem 1.2rem;
         border-radius: 30px;
         font-weight: 800;
-        font-size: 1.15rem;
+        font-size: 1.2rem;
     }}
     .day-pm25 {{
-        font-size: 0.82rem;
+        font-size: 0.84rem;
         text-align: right;
     }}
 
     /* Health Alert Banner */
     .health-alert {{
-        border-radius: 20px;
-        padding: 1.2rem 1.8rem;
-        margin: 1.4rem 0;
+        border-radius: 22px;
+        padding: 1.25rem 1.8rem;
+        margin: 1.5rem 0;
         display: flex;
         align-items: center;
-        gap: 18px;
+        gap: 20px;
         font-size: 1.02rem;
+        backdrop-filter: blur(16px);
     }}
     .health-alert-icon {{
         font-size: 2.4rem;
@@ -358,12 +435,12 @@ st.markdown(f"""
         display: flex;
         justify-content: center;
         gap: 1rem;
-        margin-top: 0.4rem;
+        margin-top: 0.5rem;
     }}
     .stat-pill {{
-        padding: 0.45rem 0.95rem;
-        border-radius: 16px;
-        font-size: 0.85rem;
+        padding: 0.45rem 1rem;
+        border-radius: 18px;
+        font-size: 0.86rem;
         font-weight: 600;
     }}
 
@@ -383,7 +460,7 @@ st.markdown(f"""
         gap: 12px;
     }}
     .stTabs [data-baseweb="tab"] {{
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 10px 24px;
         font-weight: 700;
     }}
@@ -396,7 +473,7 @@ st.markdown(f"""
 # ─────────────────────────────────────────────
 # DATA & MODEL LOADING
 # ─────────────────────────────────────────────
-@st.cache_resource(show_spinner="Connecting to Hopsworks & loading ML model...")
+@st.cache_resource(show_spinner="Connecting to Hopsworks & initializing neural weights...")
 def load_model():
     """Load the trained RandomForest model and feature names."""
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -426,7 +503,7 @@ def load_model():
     return None, None, None
 
 
-@st.cache_data(ttl=3600, show_spinner="Loading historical & cloud features...")
+@st.cache_data(ttl=3600, show_spinner="Synchronizing atmospheric telemetry from Hopsworks...")
 def load_data():
     """Load historical baseline + latest cloud features."""
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -600,32 +677,32 @@ def predict_3_days_for_city(model, feature_names, df_engineered, city_name):
 # UI & PLOTLY HELPER FUNCTIONS
 # ─────────────────────────────────────────────
 def render_hero_gauge(value, category, color, is_dark_mode=False):
-    """Create a stunning primary semicircular AQI gauge."""
-    tick_color = "rgba(255,255,255,0.4)" if is_dark_mode else "#64748b"
-    bg_color = "rgba(255,255,255,0.04)" if is_dark_mode else "rgba(0,0,0,0.04)"
+    """Create a futuristic neon semicircular AQI gauge."""
+    tick_color = "rgba(0, 242, 254, 0.5)" if is_dark_mode else "#64748b"
+    bg_color = "rgba(0, 242, 254, 0.05)" if is_dark_mode else "rgba(0, 0, 0, 0.04)"
 
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=value,
-        number={"font": {"size": 58, "color": color, "family": "Inter, sans-serif"}, "suffix": ""},
+        number={"font": {"size": 60, "color": color, "family": "Inter, sans-serif"}, "suffix": ""},
         gauge={
             "axis": {"range": [0, 500], "tickwidth": 1.5, "tickcolor": tick_color,
                      "tickvals": [0, 50, 100, 150, 200, 300, 500],
                      "ticktext": ["0", "50", "100", "150", "200", "300", "500"]},
-            "bar": {"color": color, "thickness": 0.36},
+            "bar": {"color": color, "thickness": 0.38},
             "bgcolor": bg_color,
             "borderwidth": 0,
             "steps": [
-                {"range": [0, 50], "color": "rgba(16, 185, 129, 0.18)"},
-                {"range": [50, 100], "color": "rgba(245, 158, 11, 0.18)"},
-                {"range": [100, 150], "color": "rgba(249, 115, 22, 0.18)"},
-                {"range": [150, 200], "color": "rgba(239, 68, 68, 0.18)"},
-                {"range": [200, 300], "color": "rgba(139, 92, 246, 0.18)"},
-                {"range": [300, 500], "color": "rgba(127, 29, 29, 0.18)"},
+                {"range": [0, 50], "color": "rgba(0, 245, 160, 0.18)"},
+                {"range": [50, 100], "color": "rgba(255, 208, 0, 0.18)"},
+                {"range": [100, 150], "color": "rgba(255, 119, 0, 0.18)"},
+                {"range": [150, 200], "color": "rgba(255, 0, 85, 0.18)"},
+                {"range": [200, 300], "color": "rgba(191, 0, 255, 0.18)"},
+                {"range": [300, 500], "color": "rgba(112, 0, 40, 0.18)"},
             ],
             "threshold": {
-                "line": {"color": color, "width": 3.5},
-                "thickness": 0.85,
+                "line": {"color": color, "width": 4},
+                "thickness": 0.88,
                 "value": value
             }
         }
@@ -645,9 +722,9 @@ def render_3day_trajectory(forecasts, city_name, is_dark_mode=False):
     aqis = [f["epa_aqi"] for f in forecasts]
     pm25s = [f["pm2_5"] for f in forecasts]
 
-    line_color = "#38bdf8" if is_dark_mode else "#2563eb"
-    fill_color = "rgba(56, 189, 248, 0.15)" if is_dark_mode else "rgba(37, 99, 235, 0.12)"
-    grid_color = "rgba(255, 255, 255, 0.08)" if is_dark_mode else "#f1f5f9"
+    line_color = "#00f2fe" if is_dark_mode else "#0284c7"
+    fill_color = "rgba(0, 242, 254, 0.18)" if is_dark_mode else "rgba(2, 132, 199, 0.14)"
+    grid_color = "rgba(0, 242, 254, 0.08)" if is_dark_mode else "#e2e8f0"
     text_color = "#f8fafc" if is_dark_mode else "#0f172a"
 
     fig = go.Figure()
@@ -660,8 +737,8 @@ def render_3day_trajectory(forecasts, city_name, is_dark_mode=False):
         text=[f"AQI {a}" for a in aqis],
         textposition="top center",
         textfont=dict(size=13, weight="bold", color=text_color),
-        line=dict(color=line_color, width=3.5, shape='spline'),
-        marker=dict(size=12, color=line_color, line=dict(width=2, color='white')),
+        line=dict(color=line_color, width=4, shape='spline'),
+        marker=dict(size=13, color=line_color, line=dict(width=2.5, color='white')),
         fill='tozeroy',
         fillcolor=fill_color,
         hovertemplate="<b>%{x}</b><br>Predicted EPA AQI: %{y}<br>Predicted PM2.5: %{customdata:.1f} µg/m³<extra></extra>",
@@ -669,12 +746,12 @@ def render_3day_trajectory(forecasts, city_name, is_dark_mode=False):
     ))
 
     # EPA Thresholds
-    fig.add_hline(y=50, line_dash="dot", line_color="#10b981", annotation_text="Good (50)", annotation_position="bottom right")
-    fig.add_hline(y=100, line_dash="dash", line_color="#f59e0b", annotation_text="Moderate (100)", annotation_position="bottom right")
-    fig.add_hline(y=150, line_dash="dash", line_color="#f97316", annotation_text="Unhealthy (150)", annotation_position="bottom right")
+    fig.add_hline(y=50, line_dash="dot", line_color="#00f5a0", annotation_text="Good (50)", annotation_position="bottom right")
+    fig.add_hline(y=100, line_dash="dash", line_color="#ffd000", annotation_text="Moderate (100)", annotation_position="bottom right")
+    fig.add_hline(y=150, line_dash="dash", line_color="#ff7700", annotation_text="Unhealthy (150)", annotation_position="bottom right")
 
     fig.update_layout(
-        title=dict(text=f"72-Hour Air Quality Forecast Curve — {city_name}", font=dict(size=16, color=text_color)),
+        title=dict(text=f"72-Hour Atmospheric Forecast Curve — {city_name}", font=dict(size=16, color=text_color)),
         yaxis_title="Predicted EPA AQI",
         height=320,
         margin=dict(l=40, r=20, t=50, b=30),
@@ -689,7 +766,7 @@ def render_3day_trajectory(forecasts, city_name, is_dark_mode=False):
 
 
 def render_city_forecast_map(city_forecasts_dict, is_dark_mode=False):
-    """Create an interactive map showing 3-day forecast markers for all cities."""
+    """Create an interactive futuristic map showing 3-day forecast markers for all cities."""
     lats, lons, names, avg_aqis, colors, sizes, texts = [], [], [], [], [], [], []
 
     for city_name, info in CITIES.items():
@@ -704,10 +781,10 @@ def render_city_forecast_map(city_forecasts_dict, is_dark_mode=False):
             names.append(city_name)
             avg_aqis.append(avg_aqi)
             colors.append(clr)
-            sizes.append(max(24, min(avg_aqi / 4.2, 58)))
+            sizes.append(max(26, min(avg_aqi / 4.0, 60)))
             
             text = (
-                f"<b>{city_name} (3-Day AI Forecast)</b><br>"
+                f"<b>{city_name} [3-DAY NEURAL TELEMETRY]</b><br>"
                 f"• <b>3-Day Avg AQI: {avg_aqi} ({avg_cat})</b><br>"
                 f"• {fc[0]['day_name']}: AQI {fc[0]['epa_aqi']} ({fc[0]['category']})<br>"
                 f"• {fc[1]['day_name']}: AQI {fc[1]['epa_aqi']} ({fc[1]['category']})<br>"
@@ -722,7 +799,7 @@ def render_city_forecast_map(city_forecasts_dict, is_dark_mode=False):
     fig.add_trace(go.Scattermapbox(
         lat=lats, lon=lons,
         mode='markers+text',
-        marker=dict(size=sizes, color=colors, opacity=0.92, sizemode='diameter'),
+        marker=dict(size=sizes, color=colors, opacity=0.94, sizemode='diameter'),
         text=names,
         textposition="top center",
         textfont=dict(size=12, family="Inter, sans-serif", color="white" if is_dark_mode else "#0f172a"),
@@ -747,16 +824,28 @@ def render_city_forecast_map(city_forecasts_dict, is_dark_mode=False):
 # MAIN APPLICATION
 # ─────────────────────────────────────────────
 def main():
-    # ── Top Bar: Theme Switcher Toggle ──
-    col_empty, col_theme = st.columns([5.5, 1.5])
+    # ── Top HUD Status Bar with Icon-Only Theme Switcher ──
+    col_hud, col_theme = st.columns([8, 1.2])
+
+    with col_hud:
+        st.markdown("""
+        <div class="top-hud-bar" style="margin-bottom: 0;">
+            <div class="hud-status-badge">
+                <span class="live-dot"></span>
+                <span>NEURAL INFERENCE ACTIVE • SINDH REGION • 72H WINDOW</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
     with col_theme:
-        theme_choice = st.segmented_control(
-            "Theme Mode",
-            options=["☀️ Light", "🌙 Night"],
-            default="🌙 Night" if is_dark else "☀️ Light",
+        # Icon-only theme switcher (☀️ / 🌙)
+        theme_icon = st.segmented_control(
+            "Theme",
+            options=["☀️", "🌙"],
+            default="🌙" if is_dark else "☀️",
             label_visibility="collapsed"
         )
-        new_theme = "dark" if "Night" in str(theme_choice) else "light"
+        new_theme = "dark" if theme_icon == "🌙" else "light"
         if new_theme != st.session_state.theme:
             st.session_state.theme = new_theme
             st.rerun()
@@ -765,7 +854,12 @@ def main():
     st.markdown("""
     <div class="hero-header">
         <h1>🌬️ Sindh Air Quality — 3-Day ML Forecast</h1>
-        <p>72-hour machine learning predictions for 5 cities in Sindh, powered by RandomForest AI (Model v5)</p>
+        <p>72-hour neural predictions across Sindh, powered by RandomForest AI (Model v5)</p>
+        <div class="hud-chips-row">
+            <span class="hud-chip">MODEL: RF-V5 (300 TREES)</span>
+            <span class="hud-chip">ACCURACY: R² 74.7%</span>
+            <span class="hud-chip">PIPELINE: HOPSWORKS CLOUD</span>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -822,26 +916,26 @@ def main():
     diff_aqi = selected_forecasts[2]['epa_aqi'] - selected_forecasts[0]['epa_aqi']
     if diff_aqi <= -5:
         trend_label = f"📉 Improving (↓ {abs(diff_aqi)} AQI)"
-        trend_color = "#10b981"
+        trend_color = "#00f5a0"
     elif diff_aqi >= 5:
         trend_label = f"📈 Increasing (↑ {diff_aqi} AQI)"
-        trend_color = "#ef4444"
+        trend_color = "#ff0055"
     else:
         trend_label = "➡️ Stable (±3 AQI)"
-        trend_color = "#3b82f6"
+        trend_color = "#00f2fe" if is_dark else "#0284c7"
 
     # ── Top Row: Single 3-Day Average Hero Gauge + Daily Breakdown Cards ──
     col_left, col_right = st.columns([1.15, 1.25])
 
     with col_left:
-        glow_style = f"box-shadow: 0 0 30px {avg_color}30;" if is_dark else f"box-shadow: 0 10px 30px {avg_color}18;"
+        glow_style = f"box-shadow: 0 0 35px {avg_color}35;" if is_dark else f"box-shadow: 0 10px 30px {avg_color}18;"
         st.markdown(f"""
-        <div class="hero-gauge-card" style="border-color: {avg_color}55; {glow_style}">
+        <div class="hero-gauge-card" style="border-color: {avg_color}60; {glow_style}">
             <div>
                 <span class="hero-badge" style="background: {avg_color}22; color: {avg_color}; border: 1.5px solid {avg_color}60;">
-                    🤖 3-DAY AVERAGE AI FORECAST
+                    ⚡ 3-DAY AVERAGE PREDICTION
                 </span>
-                <div style="font-size: 1.2rem; font-weight: 800; margin-top: 0.2rem;">
+                <div style="font-size: 1.25rem; font-weight: 800; margin-top: 0.2rem;">
                     {CITIES[selected_city]['emoji']} {selected_city}, Sindh
                 </div>
             </div>
@@ -852,7 +946,7 @@ def main():
 
         st.markdown(f"""
             <div>
-                <div style="font-size: 1.4rem; font-weight: 800; color: {avg_color}; margin-bottom: 0.35rem;">
+                <div style="font-size: 1.45rem; font-weight: 800; color: {avg_color}; margin-bottom: 0.35rem; letter-spacing: -0.5px;">
                     {avg_category}
                 </div>
                 <div class="stat-pill-row">
@@ -867,8 +961,9 @@ def main():
         st.markdown('<div class="daily-breakdown-container">', unsafe_allow_html=True)
         
         for fc in selected_forecasts:
+            glow_border = f"box-shadow: inset 4px 0 0 {fc['color']};"
             st.markdown(f"""
-            <div class="day-row-card" style="border-left: 6px solid {fc['color']};">
+            <div class="day-row-card" style="{glow_border} border-left: 6px solid {fc['color']};">
                 <div>
                     <div class="day-label">{fc['day_name']} ({fc['step_label']})</div>
                     <div class="day-date">{fc['date_str']}</div>
@@ -877,7 +972,7 @@ def main():
                     <div class="day-pm25">
                         Predicted PM2.5<br><b>{fc['pm2_5']:.1f} µg/m³</b>
                     </div>
-                    <div class="day-aqi-pill" style="background: {fc['color']}22; color: {fc['color']}; border: 1.5px solid {fc['color']}60;">
+                    <div class="day-aqi-pill" style="background: {fc['color']}22; color: {fc['color']}; border: 1.5px solid {fc['color']}65;">
                         AQI {fc['epa_aqi']}
                     </div>
                 </div>
@@ -894,10 +989,10 @@ def main():
     alert_icon = "✅" if highest_risk_day['epa_aqi'] <= 50 else "⚠️" if highest_risk_day['epa_aqi'] <= 150 else "🚨" if highest_risk_day['epa_aqi'] <= 300 else "🆘"
 
     st.markdown(f"""
-    <div class="health-alert" style="background: {risk_color}16; border-left: 6px solid {risk_color};">
+    <div class="health-alert" style="background: {risk_color}15; border-left: 6px solid {risk_color}; box-shadow: 0 0 25px {risk_color}20;">
         <span class="health-alert-icon">{alert_icon}</span>
         <div>
-            <strong>3-Day Health Advisory for {selected_city}:</strong> Peak pollution is expected on <b>{highest_risk_day['day_name']} ({highest_risk_day['date_str']})</b> with an AQI of <b>{highest_risk_day['epa_aqi']} ({risk_cat})</b>. {risk_msg}
+            <strong>3-Day Health Advisory for {selected_city}:</strong> Peak risk predicted on <b>{highest_risk_day['day_name']} ({highest_risk_day['date_str']})</b> with an AQI of <b>{highest_risk_day['epa_aqi']} ({risk_cat})</b>. {risk_msg}
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -925,9 +1020,9 @@ def main():
 
             if not city_ts_7.empty and 'pm2_5' in city_ts_7.columns:
                 fig_hist = go.Figure()
-                line_col = "#38bdf8" if is_dark else "#2563eb"
-                fill_col = "rgba(56, 189, 248, 0.15)" if is_dark else "rgba(37, 99, 235, 0.1)"
-                grid_col = "rgba(255, 255, 255, 0.08)" if is_dark else "#f1f5f9"
+                line_col = "#00f2fe" if is_dark else "#0284c7"
+                fill_col = "rgba(0, 242, 254, 0.18)" if is_dark else "rgba(2, 132, 199, 0.1)"
+                grid_col = "rgba(0, 242, 254, 0.08)" if is_dark else "#e2e8f0"
                 txt_col = "#f8fafc" if is_dark else "#0f172a"
 
                 fig_hist.add_trace(go.Scatter(
@@ -968,8 +1063,8 @@ def main():
                     card_bg = f"{c_clr}15" if is_dark else "#ffffff"
                     card_border = f"{c_clr}40" if is_dark else "#e2e8f0"
                     st.markdown(f"""
-                    <div style="text-align:center; padding: 0.9rem 0.5rem; border-radius: 18px;
-                                background: {card_bg}; border: 1.5px solid {card_border}; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+                    <div style="text-align:center; padding: 0.9rem 0.5rem; border-radius: 20px;
+                                background: {card_bg}; border: 1.5px solid {card_border}; box-shadow: 0 4px 18px rgba(0,0,0,0.04);">
                         <div style="font-size: 1.3rem;">{CITIES[city_name]['emoji']}</div>
                         <div style="font-weight: 800; font-size: 0.98rem; margin: 0.2rem 0;">{city_name}</div>
                         <div style="font-size: 1.4rem; font-weight: 800; color: {c_clr};">Avg {c_avg}</div>
