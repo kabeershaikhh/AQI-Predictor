@@ -19,7 +19,7 @@ load_dotenv()
 
 # page condiguration
 st.set_page_config(
-    page_title="Sindh AQI — 3-Day Forecast",
+    page_title="Sindh AQI 3-Day Forecast",
     page_icon="🌍",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -610,7 +610,7 @@ def main():
     with col_hdr_left:
         st.markdown("""
         <div style="padding: 0.3rem 0;">
-            <div class="header-title-text">Sindh Air Quality — 3-Day Forecast</div>
+            <div class="header-title-text">Sindh Air Quality 3-Day Forecast</div>
             <div class="header-subtitle-text">72-hour air pollution predictions for Sindh, Pakistan</div>
         </div>
         """, unsafe_allow_html=True)
@@ -846,7 +846,7 @@ def main():
     st.markdown("---")
     st.markdown("""
     <div style="text-align: center; color: #94a3b8; font-size: 0.82rem; padding: 0.6rem;">
-        Sindh Air Quality Forecast System • Data Updated Daily via Automated Pipeline
+        Sindh Air Quality Forecast System • Developed by Kabeer with ❤️. 
     </div>
     """, unsafe_allow_html=True)
 
