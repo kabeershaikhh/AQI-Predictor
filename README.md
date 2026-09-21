@@ -20,7 +20,7 @@
 ## 📸 Interactive Dashboard Preview
 
 <p align="center">
-  <b>⚡ 3-Day Forecast Hero View (Hyderabad, Sindh)</b><br>
+  <b 3-Day Forecast View </b><br>
   <img src="images/dashboard_main.png" width="90%" alt="Main Forecast Dashboard"/>
 </p>
 
@@ -30,17 +30,17 @@
 </p>
 
 <p align="center">
-  <b>📈 72-Hour Forecast Trajectory Curve</b><br>
+  <b> 72-Hour Forecast Trajectory Curve</b><br>
   <img src="images/dashboard_trends.png" width="90%" alt="Forecast Trajectory"/>
 </p>
 
 <p align="center">
-  <b>🏙️ All 5 Cities Comparison Matrix</b><br>
+  <b> All 5 Cities Comparison Matrix</b><br>
   <img src="images/dashboard_matrix.png" width="90%" alt="City Comparison Matrix"/>
 </p>
 
 <p align="center">
-  <b>🤖 AI Model Telemetry & SHAP Explainability</b><br>
+  <b> AI Model Telemetry & SHAP Explainability</b><br>
   <img src="images/dashboard_model.png" width="90%" alt="Model Parameters and SHAP"/>
 </p>
 
