@@ -1,6 +1,48 @@
-#  Sindh Air Quality Prediction System (72-Hour ML Forecast)
+# 🌬️ Sindh Air Quality Prediction System (72-Hour ML Forecast)
 > **An End-to-End Serverless Machine Learning System for Multi-City Air Quality Forecasting in Sindh, Pakistan.**
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://sindh-aqi-predictor.streamlit.app/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Hopsworks Feature Store](https://img.shields.io/badge/Hopsworks-Feature%20Store%20%26%20Model%20Registry-00A699.svg)](https://www.hopsworks.ai/)
+[![GitHub Actions CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF.svg)](https://github.com/features/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+---
+
+### 🌐 Live Web Application
+🔗 **Live Dashboard:** [https://sindh-aqi-predictor.streamlit.app/](https://sindh-aqi-predictor.streamlit.app/)
+
+> **📌 Note on Cloud Deployment & Hopsworks Model Registry:**
+> When running on Streamlit Community Cloud, Hopsworks free-tier API rate limits may occasionally throttle direct remote model registry downloads during server cold starts. To guarantee 100% continuous uptime and seamless inference, the application features an automatic local model fallback (`aqi_model_dir/`), allowing the system to run both on cloud infrastructure and locally with full ML forecasting capabilities.
+
+---
+
+## 📸 Interactive Dashboard Preview
+
+<p align="center">
+  <b>⚡ 3-Day Forecast Hero View (Hyderabad, Sindh)</b><br>
+  <img src="images/dashboard_main.png" width="90%" alt="Main Forecast Dashboard"/>
+</p>
+
+<p align="center">
+  <b>🗺️ Interactive Regional 5-City Map</b><br>
+  <img src="images/dashboard_map.png" width="90%" alt="Sindh Regional Map"/>
+</p>
+
+<p align="center">
+  <b>📈 72-Hour Forecast Trajectory Curve</b><br>
+  <img src="images/dashboard_trends.png" width="90%" alt="Forecast Trajectory"/>
+</p>
+
+<p align="center">
+  <b>🏙️ All 5 Cities Comparison Matrix</b><br>
+  <img src="images/dashboard_matrix.png" width="90%" alt="City Comparison Matrix"/>
+</p>
+
+<p align="center">
+  <b>🤖 AI Model Telemetry & SHAP Explainability</b><br>
+  <img src="images/dashboard_model.png" width="90%" alt="Model Parameters and SHAP"/>
+</p>
 
 ---
 
@@ -21,7 +63,7 @@
 
 ---
 
-##  Executive Summary
+## 🌟 Executive Summary
 
 Air pollution is one of the most critical public health challenges across the Sindh province in Pakistan. Rapid urbanization, industrial emissions, vehicular traffic, and seasonal meteorological shifts lead to severe spikes in particulate matter ($PM_{2.5}$ and $PM_{10}$), often reaching hazardous levels.
 
@@ -32,7 +74,7 @@ This project delivers an **end-to-end, automated, serverless Machine Learning sy
 - **Nawabshah** (Central agricultural & regional transit basin)
 - **Sukkur** (Northern Sindh economic gateway on the Indus River)
 
-###  Key Project Achievements:
+### 🏆 Key Project Achievements:
 - **Feature Store & Model Registry:** Serverless data infrastructure using **Hopsworks Cloud**.
 - **Automated Hourly Ingestion:** GitHub Actions cron pipeline ingesting live atmospheric pollutants from the **OpenWeather Air Pollution API**.
 - **Automated Daily Retraining:** CI/CD pipeline performing automated retraining, feature importance calculation, model evaluation, and versioning.
@@ -41,7 +83,7 @@ This project delivers an **end-to-end, automated, serverless Machine Learning sy
 
 ---
 
-##  Urban & Environmental Context (Sindh, Pakistan)
+## 🏙️ Urban & Environmental Context (Sindh, Pakistan)
 
 | City | Latitude | Longitude | Primary Pollution Drivers |
 |---|---|---|---|
@@ -53,7 +95,7 @@ This project delivers an **end-to-end, automated, serverless Machine Learning sy
 
 ---
 
-##  System Architecture
+## 🏗️ End-to-End System Architecture
 
 The system follows the modern **FTI (Feature-Training-Inference)** serverless MLOps pattern:
 
@@ -100,7 +142,7 @@ flowchart TD
 
 ---
 
-##  Data Pipeline & Historical Backfill
+## 📡 Data Pipeline & Historical Backfill
 
 ### 1. Ingested Pollutants
 From the OpenWeather Air Pollution API, 8 distinct atmospheric chemical compounds and particulates are ingested:
@@ -120,7 +162,7 @@ From the OpenWeather Air Pollution API, 8 distinct atmospheric chemical compound
 
 ---
 
-##  Exploratory Data Analysis (EDA) Insights
+## 📊 Exploratory Data Analysis (EDA) Insights
 
 The exploratory data analysis (`eda.py`) revealed several key domain insights that directly informed our feature engineering and modeling strategies:
 
@@ -152,12 +194,12 @@ The exploratory data analysis (`eda.py`) revealed several key domain insights th
 
 ---
 
-##  Feature Engineering & How Model Accuracy Was Boosted
+## ⚙️ Feature Engineering & How Model Accuracy Was Boosted
 
-###  The Initial Challenge: Low Baseline Performance
+### ❌ The Initial Challenge: Low Baseline Performance
 Initial naive models trained on raw pollutant values without temporal dynamics achieved poor predictive power ($R^2 < 0.40$). Air pollution is inherently a **dynamic, autocorrelated time-series phenomenon** governed by atmospheric accumulation, wind dispersion, and human activity cycles.
 
-###  Key Engineering Innovations That Boosted $R^2$ to 74.7%:
+### 🚀 Key Engineering Innovations That Boosted $R^2$ to 74.7%:
 
 ```
 Raw Data (8 Pollutants + Timestamp)
@@ -196,7 +238,7 @@ $$I = \frac{I_{\text{high}} - I_{\text{low}}}{C_{\text{high}} - C_{\text{low}}} 
 
 ---
 
-##  Model Benchmarking & Selection
+## 🤖 Model Benchmarking & Selection
 
 We evaluated multiple candidate algorithms using **temporal train/test splitting** (training on historical data, testing strictly on out-of-time future data to prevent data leakage):
 
@@ -214,7 +256,7 @@ We evaluated multiple candidate algorithms using **temporal train/test splitting
 
 ---
 
-##  Model Explainability with SHAP
+## 🔍 Model Explainability with SHAP
 
 To ensure model transparency and eliminate "black box" decisions, we integrated **SHAP (SHapley Additive exPlanations)** into the automated training pipeline:
 
@@ -230,7 +272,7 @@ To ensure model transparency and eliminate "black box" decisions, we integrated 
 
 ---
 
-##  Automated Production Pipelines (CI/CD)
+## 🔄 Automated Production Pipelines (CI/CD)
 
 The entire ML lifecycle is fully automated using **GitHub Actions CI/CD workflows**:
 
@@ -252,7 +294,7 @@ The entire ML lifecycle is fully automated using **GitHub Actions CI/CD workflow
 
 ---
 
-##  Interactive 3-Day Forecast Dashboard (Streamlit)
+## 💻 Interactive 3-Day Forecast Dashboard (Streamlit)
 
 The user-facing dashboard (`app.py`) was engineered for **maximum readability, zero-scroll UX, and complete citizen accessibility**:
 
@@ -266,20 +308,20 @@ The user-facing dashboard (`app.py`) was engineered for **maximum readability, z
 
 ---
 
-##  Challenges Encountered & Engineering Solutions
+## 🛠️ Challenges Encountered & Engineering Solutions
 
 | Challenge Encountered | Technical Root Cause | Engineering Solution Implemented |
 |---|---|---|
+| **Hopsworks Cloud Quotas on Streamlit Cloud** | Free-tier rate limits throttle direct model downloads on cold boots. | Implemented automated local model fallback (`aqi_model_dir/`), ensuring 100% continuous uptime both on cloud and localhost. |
 | **Initial Low Accuracy ($R^2 < 0.40$)** | Naive models lacked historical context and temporal memory. | Engineered 4 multi-scale lags (1h, 6h, 12h, 24h), 24h rolling mean/std, 24h rate of change, and cyclical Fourier time encodings, boosting $R^2$ to **74.7%**. |
 | **Basemap API Key Watermark Error** | Third-party Carto basemap tiles required paid tokens. | Migrated to **OpenStreetMap** public vector basemap, ensuring 100% keyless, reliable rendering. |
 | **Sukkur City Clipped on Map View** | Sukkur (27.70° N) was cut off by tight map zoom and Southern center. | Calculated geographic midpoint (`lat=26.28° N, lon=68.10° E`) and optimized zoom to `5.5`, perfectly capturing all 5 cities. |
 | **Light/Dark Contrast Clashes** | Standard yellow text failed WCAG contrast on light cards. | Switched to a unified high-contrast Dark Mode with theme-aware pastel pills and crisp typography. |
 | **Vertical Scroll Fatigue** | Large header and city pills pushed gauge below the fold. | Combined Header + City Selector into a single horizontal top navbar, making all core forecast widgets visible above the fold. |
-| **Hopsworks Cloud API Rate Limits** | Intermittent cloud network latency during inference. | Built robust fallback caching: auto-downloads from Hopsworks Model Registry with graceful local fallback to `aqi_model_dir/`. |
 
 ---
 
-##  How to Run & Reproduce Locally
+## 🚀 How to Run & Reproduce Locally
 
 ### 1. Clone the Repository
 ```bash
@@ -325,7 +367,7 @@ Open `http://localhost:8501` in your browser.
 
 ---
 
-##  Project Directory Structure
+## 📁 Project Directory Structure
 
 ```
 AQI-Predictor/
@@ -341,6 +383,11 @@ AQI-Predictor/
 │   ├── aqi_historical.parquet         # Baseline historical dataset
 │   └── latest_features.parquet        # Most recent hourly live snapshot
 ├── images/                            # EDA & Model Explainability Visuals
+│   ├── dashboard_main.png             # Main 3-day forecast hero view
+│   ├── dashboard_map.png              # Sindh regional cartography map
+│   ├── dashboard_trends.png           # 72-hour forecast trajectory curve
+│   ├── dashboard_matrix.png           # 5-city comparison table
+│   ├── dashboard_model.png            # AI model specs & SHAP plot
 │   ├── eda_aqi_distribution.png       # AQI distribution per city
 │   ├── eda_aqi_over_time.png          # Temporal pollution time series
 │   ├── eda_aqi_by_day.png             # Day-of-week pollution variation
