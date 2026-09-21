@@ -291,9 +291,9 @@ def load_model():
     return None, None, None
 
 
-@st.cache_data(ttl=3600, show_spinner="Loading latest air quality data...")
+@st.cache_data(ttl=900, show_spinner="Loading latest air quality data...")
 def load_data():
-    """Load historical baseline + latest cloud features."""
+    """Load historical baseline + latest cloud features + live atmospheric readings."""
     base_dir = os.path.dirname(os.path.abspath(__file__))
     dfs = []
 
@@ -302,6 +302,7 @@ def load_data():
         hist_df = pd.read_parquet(hist_path)
         dfs.append(hist_df)
 
+    # 1. Try downloading latest live features from Hopsworks
     try:
         import hopsworks
         api_key = os.getenv("HOPSWORKS_API_KEY")
@@ -321,6 +322,39 @@ def load_data():
     if os.path.exists(local_latest):
         local_live = pd.read_parquet(local_latest)
         dfs.append(local_live)
+
+    # 2. Try fetching live real-time atmospheric readings from OpenWeather API
+    ow_key = os.getenv("OPENWEATHER_API_KEY")
+    if ow_key:
+        live_readings = []
+        now = datetime.now()
+        for city_name, info in CITIES.items():
+            try:
+                import requests
+                url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={info['lat']}&lon={info['lon']}&appid={ow_key}"
+                res = requests.get(url, timeout=3)
+                if res.status_code == 200:
+                    data = res.json()["list"][0]["components"]
+                    live_readings.append({
+                        "city": city_name,
+                        "timestamp": int(now.timestamp() * 1000),
+                        "co": data.get("co", 0.0),
+                        "no": data.get("no", 0.0),
+                        "no2": data.get("no2", 0.0),
+                        "o3": data.get("o3", 0.0),
+                        "so2": data.get("so2", 0.0),
+                        "pm2_5": data.get("pm2_5", 0.0),
+                        "pm10": data.get("pm10", 0.0),
+                        "nh3": data.get("nh3", 0.0),
+                        "hour": now.hour,
+                        "day": now.day,
+                        "month": now.month,
+                        "day_of_week": now.weekday(),
+                    })
+            except Exception:
+                pass
+        if live_readings:
+            dfs.append(pd.DataFrame(live_readings))
 
     if not dfs:
         return None
@@ -373,7 +407,7 @@ def engineer_features(df):
 
 
 def predict_3_days_for_city(model, feature_names, df_engineered, city_name):
-    """Generate 3-day (+24h, +48h, +72h) PM2.5 and EPA AQI predictions."""
+    """Generate 3-day (+24h, +48h, +72h) PM2.5 and EPA AQI predictions starting dynamically from TODAY."""
     city_col = f"city_{city_name}"
     if city_col not in df_engineered.columns:
         return None
@@ -386,15 +420,14 @@ def predict_3_days_for_city(model, feature_names, df_engineered, city_name):
 
     latest_row = city_data.iloc[-1:].copy()
     
-    base_time = pd.to_datetime(latest_row['timestamp'].values[0])
-    if pd.isna(base_time):
-        base_time = datetime.now()
+    # Always anchor the forecast dynamically to the current real-time date
+    now = datetime.now()
 
     forecasts = []
     current_features = latest_row.copy()
     
     for day in range(1, 4):
-        target_date = base_time + timedelta(days=day)
+        target_date = now + timedelta(days=day)
         date_str = target_date.strftime("%a, %b %d")
         
         available = [f for f in feature_names if f in current_features.columns]
@@ -422,7 +455,7 @@ def predict_3_days_for_city(model, feature_names, df_engineered, city_name):
             "health_msg": AQI_HEALTH_MESSAGES.get(category, "")
         })
 
-        # Multi-step update
+        # Multi-step autoregressive update
         current_features['pm2_5_lag_24h'] = current_features['pm2_5']
         current_features['pm2_5'] = pred_pm25
         current_features['pm2_5_lag_1h'] = pred_pm25
